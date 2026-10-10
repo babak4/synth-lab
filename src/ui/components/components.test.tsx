@@ -94,7 +94,12 @@ describe('Select', () => {
     const onChange = vi.fn();
     render(<Select id="lfo-destination" value="cutoff" onChange={onChange} />);
     const select = screen.getByLabelText('Destination');
-    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['Pitch', 'Cutoff', 'Amp', 'Pulse width']);
+    expect([...select.querySelectorAll('option')].map((o) => o.textContent)).toEqual([
+      'Pitch',
+      'Cutoff',
+      'Amp',
+      'Pulse width',
+    ]);
     fireEvent.change(select, { target: { value: 'pitch' } });
     expect(onChange).toHaveBeenCalledWith('pitch');
   });

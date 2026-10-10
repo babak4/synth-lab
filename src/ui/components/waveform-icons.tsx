@@ -14,7 +14,14 @@ export function WaveIcon({ shape }: { shape: string }) {
   if (!d) return null;
   return (
     <svg className="wave-icon" width="24" height="14" viewBox="0 0 24 14" aria-hidden="true">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
