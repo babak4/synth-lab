@@ -1,0 +1,177 @@
+harmonic:
+  term: "Harmonic"
+  definition: "A pure sine-wave piece of a sound whose frequency is a whole-number multiple of the lowest one. Together, harmonics make up a note's tone."
+fundamental:
+  term: "Fundamental"
+  definition: "The lowest frequency in a note. It sets the pitch you hear; the harmonics above it set the tone."
+frequency:
+  term: "Frequency"
+  definition: "How many times a wave repeats each second, measured in hertz (Hz). Higher frequencies sound higher in pitch."
+hz:
+  term: "Hz (hertz)"
+  definition: "One cycle per second. Concert A is 440 Hz; 1 kHz (kilohertz) is 1,000 Hz."
+pitch:
+  term: "Pitch"
+  definition: "How high or low a note sounds. It is set mainly by the frequency of the wave."
+octave:
+  term: "Octave"
+  definition: "A doubling of frequency. Notes an octave apart sound like the same note, one higher than the other."
+semitone:
+  term: "Semitone"
+  definition: "The smallest step on a piano keyboard: one twelfth of an octave."
+cent:
+  term: "Cent"
+  definition: "One hundredth of a semitone. Cents describe tiny differences in tuning."
+waveform:
+  term: "Waveform"
+  definition: "The shape of a repeating sound wave, such as a sine, triangle, sawtooth or square. The shape decides the tone."
+sine:
+  term: "Sine wave"
+  definition: "The simplest waveform: one smooth harmonic and nothing else. It sounds pure and soft."
+sawtooth:
+  term: "Sawtooth wave"
+  definition: "A bright, buzzy waveform that contains every harmonic, each one quieter than the one before."
+square:
+  term: "Square wave"
+  definition: "A hollow-sounding waveform with only the odd-numbered harmonics (1st, 3rd, 5th and so on)."
+triangle:
+  term: "Triangle wave"
+  definition: "A soft waveform with only odd harmonics, which fade away much faster than a square wave's."
+pulse:
+  term: "Pulse wave"
+  definition: "A square-like wave whose width can change. Changing the width changes which harmonics are present."
+oscillator:
+  term: "Oscillator"
+  definition: "The part of a synth that makes a repeating wave. It is the raw sound that everything else shapes."
+noise:
+  term: "Noise"
+  definition: "A sound made of random frequencies all at once, like a hiss. White noise has equal energy at every frequency."
+beating:
+  term: "Beating"
+  definition: "A slow pulsing in volume heard when two notes are very nearly, but not exactly, the same pitch."
+detune:
+  term: "Detune"
+  definition: "To tune one oscillator slightly away from another. A few cents of detune thickens a sound."
+filter:
+  term: "Filter"
+  definition: "A process that lets some frequencies through and reduces others. It is the main tone-shaping tool in a subtractive synth."
+cutoff:
+  term: "Cutoff"
+  definition: "The frequency at which a filter starts to reduce the sound. Everything beyond it is turned down gradually."
+resonance:
+  term: "Resonance"
+  definition: "A boost at the cutoff frequency that gives a filter a ringing, vocal character."
+q:
+  term: "Q"
+  definition: "A number for how narrow and sharp a filter's peak is. A higher Q means a more pronounced, whistling peak."
+low-pass:
+  term: "Low-pass filter"
+  definition: "A filter that lets low frequencies through and removes high ones, making a sound darker."
+high-pass:
+  term: "High-pass filter"
+  definition: "A filter that lets high frequencies through and removes low ones, making a sound thinner."
+band-pass:
+  term: "Band-pass filter"
+  definition: "A filter that lets only a band of frequencies through and removes those above and below it."
+notch:
+  term: "Notch filter"
+  definition: "A filter that removes a narrow band of frequencies and leaves everything else."
+slope:
+  term: "Slope"
+  definition: "How steeply a filter turns sounds down beyond its cutoff, measured in decibels per octave."
+decibel:
+  term: "Decibel (dB)"
+  definition: "A unit for comparing levels. Every 6 dB is roughly a doubling of the signal's size; 0 dB is the loudest level a digital system can hold."
+envelope:
+  term: "Envelope"
+  definition: "A shape that changes over the life of a note, such as a volume that rises, falls and fades."
+adsr:
+  term: "ADSR"
+  definition: "Attack, decay, sustain, release: the four stages of the most common envelope."
+attack:
+  term: "Attack"
+  definition: "How long a sound takes to rise from silence to its peak after a key is pressed."
+decay:
+  term: "Decay"
+  definition: "How long the sound takes to fall from its peak to the sustain level."
+sustain:
+  term: "Sustain"
+  definition: "The level a sound holds at for as long as the key stays down. (Unlike the other stages, it is a level, not a time.)"
+release:
+  term: "Release"
+  definition: "How long a sound takes to fade away after the key is let go."
+velocity:
+  term: "Velocity"
+  definition: "How hard a key is struck. On a synth, harder usually means louder or brighter. It runs from 1 to 127."
+lfo:
+  term: "LFO"
+  definition: "Low-frequency oscillator: a slow wave used to move another setting up and down, rather than to be heard itself."
+modulation:
+  term: "Modulation"
+  definition: "Changing one setting automatically over time, for example with an LFO or an envelope."
+vibrato:
+  term: "Vibrato"
+  definition: "A gentle, regular wobble in pitch, like a singer or violinist adds."
+tremolo:
+  term: "Tremolo"
+  definition: "A gentle, regular wobble in volume."
+polyphony:
+  term: "Polyphony"
+  definition: "The ability to play several notes at once. Each note uses one voice."
+voice:
+  term: "Voice"
+  definition: "One note's worth of the synth: its oscillators, filter and envelopes. A polyphonic synth has several voices."
+glide:
+  term: "Glide"
+  definition: "A smooth slide in pitch from one note to the next, also called portamento."
+legato:
+  term: "Legato"
+  definition: "Playing notes smoothly joined, with no gap between them."
+distortion:
+  term: "Distortion"
+  definition: "Deliberately overloading a sound so that it gains extra harmonics and a rougher edge."
+clipping:
+  term: "Clipping"
+  definition: "Flattening the tops of a wave when a signal is too big. A little adds warmth; a lot sounds harsh."
+delay:
+  term: "Delay"
+  definition: "An effect that repeats a sound after a short time, like an echo."
+feedback:
+  term: "Feedback"
+  definition: "Sending some of an effect's output back into its input, so that repeats keep coming and fade gradually."
+reverb:
+  term: "Reverb"
+  definition: "The sound of a space: many tiny echoes blending into a smooth tail that fades away."
+convolution:
+  term: "Convolution"
+  definition: "A way of making reverb by applying the character of a recorded or generated space (an impulse response) to a sound."
+limiter:
+  term: "Limiter"
+  definition: "A safety circuit that stops a signal from going past a set level, protecting your ears and speakers."
+aliasing:
+  term: "Aliasing"
+  definition: "Unwanted false frequencies created when a digital sound contains harmonics too high for the system to represent."
+spectrum:
+  term: "Spectrum"
+  definition: "The mix of frequencies in a sound and how loud each one is. The spectrum analyser draws it."
+tempo:
+  term: "Tempo"
+  definition: "The speed of the music, in beats per minute (BPM)."
+quantise:
+  term: "Quantise"
+  definition: "To snap notes to the nearest beat or subdivision of the beat, tidying up loose timing."
+midi:
+  term: "MIDI"
+  definition: "A standard way for instruments and computers to send note and control messages to each other."
+dry-wet:
+  term: "Dry and wet"
+  definition: "Dry is the original sound; wet is the effect's output. The mix control sets the balance between them."
+portamento:
+  term: "Portamento"
+  definition: "Another name for glide: sliding smoothly in pitch between notes."
+ghosting:
+  term: "Key ghosting"
+  definition: "When a keyboard cannot tell which keys are down if too many are pressed at once, so some notes do not sound."
+loop:
+  term: "Loop"
+  definition: "A section of music that repeats. In the composition tool, playback returns to the start of the loop each time it ends."

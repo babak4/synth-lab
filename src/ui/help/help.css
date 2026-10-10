@@ -1,0 +1,47 @@
+.app-shell { display: grid; grid-template-columns: minmax(0, 1fr); }
+.app-shell.help-open { grid-template-columns: minmax(0, 1fr) 380px; }
+.app-content { min-width: 0; }
+.help-drawer { position: sticky; top: 65px; height: calc(100vh - 65px); background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; box-sizing: border-box; }
+.help-drawer[hidden] { display: none; }
+.help-head { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.help-head button, .help-body button:not(.help-link):not(.term), .trythis button { font: inherit; padding: 4px 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.help-head button:disabled { opacity: 0.45; cursor: not-allowed; }
+.help-close { margin-left: auto; }
+.help-body { overflow-y: auto; padding: 4px 16px 32px; line-height: 1.5; }
+.help-body h2 { font-size: 20px; margin: 12px 0 4px; }
+.help-body h2:focus { outline: none; }
+.help-body h3 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; margin: 20px 0 4px; color: var(--text-muted); }
+.help-body ul, .help-body ol { padding-left: 20px; }
+.help-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; text-align: left; }
+.term { background: none; border: 0; padding: 0; font: inherit; color: inherit; position: relative; cursor: help; border-bottom: 1px dotted var(--text-muted); }
+.term-tip { position: absolute; left: 0; top: 100%; z-index: 5; width: 240px; padding: 8px 10px; background: var(--text); color: var(--bg); border-radius: 6px; font-size: 12px; line-height: 1.4; text-align: left; visibility: hidden; }
+.term:hover .term-tip, .term:focus .term-tip, .term:focus-visible .term-tip { visibility: visible; }
+.help-highlight { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.trythis { display: grid; gap: 8px; margin: 8px 0; }
+.trythis-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.trythis-card.active { border-color: var(--accent); background: var(--accent-soft); }
+.trythis-card h4 { margin: 0 0 2px; font-size: 14px; }
+.trythis-card p { margin: 0 0 6px; }
+.trythis-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.ab-state { display: inline-block; min-width: 1.2em; font-weight: 700; color: var(--accent); }
+.help-index { list-style: none; padding-left: 0; }
+.help-index > li { margin-top: 10px; }
+.help-index ul { margin: 2px 0 0; padding-left: 16px; list-style: none; columns: 2; }
+.section-link { font-weight: 700; }
+.diagram-wrap, .diagram { margin: 10px 0; }
+.diagram { padding: 0; }
+.diagram-svg { width: 100%; height: auto; background: var(--surface-2); border-radius: 6px; }
+.diagram figcaption { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.diagram-tabs { display: flex; gap: 4px; margin-bottom: 4px; }
+.diagram-tabs button { font: inherit; font-size: 12px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); cursor: pointer; }
+.diagram-tabs button[aria-pressed='true'] { background: var(--accent); color: var(--accent-contrast); }
+.diagram .bar { fill: var(--accent); }
+.diagram .curve { stroke: var(--text); stroke-width: 2; }
+.diagram .env { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.diagram .dot { fill: var(--accent); }
+.diagram .track { fill: var(--border); opacity: 0.5; }
+.diagram .peak { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.diagram .axis { stroke: var(--text-muted); stroke-width: 1; }
+.diagram .cutline { stroke: var(--text); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.diagram .axis-label { fill: var(--text-muted); font: 10px var(--font); }
+@media (max-width: 900px) { .app-shell.help-open { grid-template-columns: minmax(0, 1fr); } .help-drawer { position: fixed; right: 0; top: 65px; width: min(380px, 100vw); z-index: 20; } }

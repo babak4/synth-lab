@@ -1,0 +1,28 @@
+.synth-panel { display: grid; gap: 10px; }
+.flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; }
+.flow > .section { flex: 0 0 auto; }
+/* Below the designed width, sections wrap instead of overflowing; connectors would dangle, so hide them. */
+@container main (max-width: 1230px) { .flow { flex-wrap: wrap; row-gap: 10px; column-gap: 10px; } .connector { display: none; } }
+
+/* Connector lines: solid = audio path, dashed = modulation. */
+.connector { flex: 0 0 26px; align-self: center; height: 0; border-top: 2px solid var(--border); position: relative; }
+.connector::after { content: ''; position: absolute; right: -1px; top: -5px; border-left: 7px solid var(--border); border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.connector.mod { border-top-style: dashed; }
+.connector.mod::after { display: none; }
+
+.stack { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.knob-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+.knob-row .control { min-width: 56px; }
+
+.osc-panel .section-body { gap: 16px; flex-wrap: nowrap; }
+.osc { display: flex; flex-direction: column; gap: 6px; padding-right: 12px; border-right: 1px solid var(--surface-2); }
+.osc:last-child { border-right: 0; padding-right: 0; }
+.mixer-panel .section-body { flex-wrap: nowrap; gap: 6px; }
+.mixer-panel .control { min-width: 48px; }
+.mixer-panel .control-label span, .mixer-panel .control-label label { font-size: 11px; max-width: 54px; text-align: center; }
+.visualisers { min-height: 60px; width: 100%; }
+
+.osc-title { margin: 0; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+
+.segment { white-space: nowrap; }

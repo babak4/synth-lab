@@ -1,0 +1,70 @@
+/* Theme tokens. Light is the default; dark follows the OS unless data-theme overrides it.
+   Contrast of the text/surface pairs is enforced by theme.test.ts (WCAG 2.2 AA). */
+:root {
+  --bg: #f3f0ea;
+  --surface: #fffdf9;
+  --surface-2: #ebe7df;
+  --border: #8a8478;
+  --text: #1d1b18;
+  --text-muted: #55504a;
+  --accent: #0b6e6e;
+  --accent-contrast: #ffffff;
+  --accent-soft: #cfe8e6;
+  --focus: #1a4fd6;
+  --danger: #b3261e;
+  --radius: 8px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #14161a;
+    --surface: #1e2126;
+    --surface-2: #2a2e35;
+    --border: #8a909b;
+    --text: #ecebe8;
+    --text-muted: #a9adb4;
+    --accent: #4fd1c5;
+    --accent-contrast: #0b1f1d;
+    --accent-soft: #20413f;
+    --focus: #8fb3ff;
+    --danger: #ff8a80;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #14161a;
+  --surface: #1e2126;
+  --surface-2: #2a2e35;
+  --border: #8a909b;
+  --text: #ecebe8;
+  --text-muted: #a9adb4;
+  --accent: #4fd1c5;
+  --accent-contrast: #0b1f1d;
+  --accent-soft: #20413f;
+  --focus: #8fb3ff;
+  --danger: #ff8a80;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

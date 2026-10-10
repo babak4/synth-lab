@@ -1,0 +1,26 @@
+.kb-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.kb-controls .control { flex-direction: row; gap: 8px; }
+.kb-live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.kb-led { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+.kb-live.on { color: var(--text); }
+.kb-live.on .kb-led { background: var(--accent); }
+.note-readout { min-width: 120px; font: 600 20px/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: 0.03em; color: var(--text-muted); }
+.note-readout[data-playing='true'] { color: var(--accent); }
+.panic-btn { font: inherit; padding: 4px 10px; border: 1px solid var(--danger); background: var(--surface); color: var(--danger); border-radius: 6px; cursor: pointer; }
+
+.screen-keyboard { display: flex; align-items: stretch; gap: 4px; }
+.kb-scroller { overflow-x: auto; max-width: calc(36 * 24px); scrollbar-width: thin;
+  /* Overlay scrollbars (macOS, WebKit) are drawn over the content; without this gap they cover the bottom
+     of the white keys and swallow clicks aimed there. */
+  padding-bottom: 16px; }
+.kb-scroll { border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 6px; cursor: pointer; padding: 0 8px; }
+.screen-keyboard svg { display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+.key { stroke: var(--text); stroke-width: 1; transition: fill 0.04s; }
+.key.white { fill: #fdfdfb; }
+.key.black { fill: #1d1d1d; }
+.key.white.down { fill: var(--accent-soft); }
+.key.black.down { fill: var(--accent); }
+.key-label { font: 600 10px var(--font); fill: #444; pointer-events: none; }
+.key-label.on-black { fill: #eee; }
+.key-note { font: 9px var(--font); fill: #777; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .key { transition: none; } }

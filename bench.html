@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Synth Lab benchmark</title>
+    <style>
+      body { font: 14px system-ui, sans-serif; margin: 24px; max-width: 720px; }
+      pre { background: #f2f2f2; padding: 12px; overflow: auto; }
+      @media (prefers-color-scheme: dark) { body { background: #14161a; color: #ecebe8; } pre { background: #1e2126; } }
+    </style>
+  </head>
+  <body>
+    <h1>Capacity benchmark</h1>
+    <p>8 tracks × 8 voices with every effect on, in real time. Reports audio underruns where the browser exposes them.</p>
+    <p>
+      <label>Tracks <input id="tracks" type="number" value="8" min="1" max="8" /></label>
+      <label>Voices <input id="voices" type="number" value="8" min="1" max="8" /></label>
+      <label>Seconds <input id="seconds" type="number" value="15" min="1" max="120" /></label>
+      <button id="start">Start</button>
+    </p>
+    <p>
+      <label>Reverb
+        <select id="reverb"><option>hall</option><option>room</option><option>short</option><option value="off">off</option></select>
+      </label>
+      <label>Shared reverb <input id="shared" type="checkbox" checked /></label>
+      <label>Delay <input id="delay" type="checkbox" checked /></label>
+      <label>Distortion <input id="dist" type="checkbox" checked /></label>
+      <label>Latency hint
+        <select id="latency"><option>interactive</option><option>balanced</option><option>playback</option></select>
+      </label>
+    </p>
+    <pre id="result" aria-live="polite">Press Start.</pre>
+    <script type="module" src="/src/bench/main.ts"></script>
+  </body>
+</html>

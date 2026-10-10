@@ -1,0 +1,34 @@
+.app { min-height: 100vh; }
+.app-main { container: main / inline-size; padding: 12px 16px 32px; display: grid; gap: 12px; max-width: 100%; box-sizing: border-box; }
+
+.topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.brand { font-size: 18px; margin: 0 8px 0 0; letter-spacing: 0.02em; }
+.topbar-slot:empty { display: none; }
+.topbar .control { flex-direction: row; gap: 8px; }
+.topbar .knob { flex-direction: row; }
+
+.audio-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 2px solid var(--accent); background: var(--surface); color: var(--text); font: 600 14px var(--font); cursor: pointer; }
+.audio-btn[aria-pressed='true'] { background: var(--accent); color: var(--accent-contrast); }
+.audio-led { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+.audio-btn[aria-pressed='true'] .audio-led { background: var(--accent-contrast); }
+.tempo input { width: 64px; font: inherit; padding: 4px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+.tempo .unit { color: var(--text-muted); font-size: 12px; }
+
+.zone { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.zone-head { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.zone-head h2 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.zone-head button { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
+.zone-body { padding: 0 12px 12px; }
+.placeholder { color: var(--text-muted); margin: 0; }
+
+.preset-menu { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.preset-menu select, .preset-name input { font: inherit; padding: 4px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; max-width: 200px; }
+.preset-menu button { font: inherit; padding: 4px 8px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.preset-menu button:disabled { opacity: 0.5; cursor: not-allowed; }
+.preset-menu label { color: var(--text-muted); font-size: 12px; }
+.preset-edited { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0 6px; }
+.preset-name { display: flex; gap: 6px; align-items: center; }
+.preset-message { font-size: 12px; color: var(--text-muted); }
+.preset-message.error { color: var(--danger); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.help-index-btn { font: inherit; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); cursor: pointer; margin-left: auto; }

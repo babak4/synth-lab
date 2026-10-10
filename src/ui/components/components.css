@@ -1,0 +1,45 @@
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.section-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.section-head h2 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.section-body { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.section-more { margin-top: 8px; }
+.more-btn { margin-top: 8px; background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; padding: 4px; }
+
+.control { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; }
+.control-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.control-value { font-variant-numeric: tabular-nums; font-size: 12px; min-height: 1.2em; }
+
+.help-btn { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: 600 11px/1 var(--font); cursor: pointer; padding: 0; }
+.help-btn:hover { background: var(--accent-soft); }
+
+.knob-dial { width: 48px; height: 48px; border-radius: 50%; touch-action: none; cursor: ns-resize; }
+.knob-track { fill: none; stroke: var(--border); stroke-width: 3; stroke-linecap: round; opacity: 0.55; }
+.knob-value { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; }
+.knob-cap { fill: var(--surface-2); stroke: var(--border); }
+.knob-pointer { stroke: var(--text); stroke-width: 2.5; stroke-linecap: round; }
+
+.slider input[type='range'] { width: 120px; accent-color: var(--accent); }
+.slider.vertical input[type='range'] { writing-mode: vertical-lr; direction: rtl; width: auto; height: 120px; }
+
+.toggle { flex-direction: row; min-width: 0; }
+.toggle-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
+.toggle-led { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.toggle-btn[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); }
+.toggle-btn[aria-checked='true'] .toggle-led { background: var(--accent); }
+
+.segmented-group { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.segment { border: 0; border-right: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 5px 8px; font: inherit; cursor: pointer; min-width: 36px; }
+.segment:last-child { border-right: 0; }
+.segment[aria-checked='true'] { background: var(--accent); color: var(--accent-contrast); }
+.wave-icon { display: block; margin: auto; }
+
+.select select { font: inherit; padding: 4px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+
+.is-disabled .knob-dial { opacity: 0.4; cursor: not-allowed; } /* dim the dial only: labels keep their contrast */
+.segment:disabled, .toggle-btn:disabled, .select select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Control help buttons show on hover / focus (PRD §4.1); section help buttons are always visible. */
+.control .help-btn { opacity: 0; transition: opacity 0.12s; }
+.control:hover .help-btn, .control:focus-within .help-btn, .control .help-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .control .help-btn { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .control .help-btn { transition: none; } }
