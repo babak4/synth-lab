@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'plot checks need a running audio clock');
 
@@ -59,6 +60,7 @@ const dots = (page: Page, viz: string) =>
 
 test('the filter curve redraws within a frame or two of a control change', async ({ page }) => {
   await start(page);
+  await showTab(page, 'Shape');
   await frames(page, 3);
   const before = await hash(page, 'filter-plot');
   await setParam(page, 'filter-cutoff', 800);
@@ -72,6 +74,7 @@ test('the filter curve redraws within a frame or two of a control change', async
 
 test('envelope dots appear for a held note, advance through the release, and vanish when it ends', async ({ page }) => {
   await start(page);
+  await showTab(page, 'Shape');
   await setParam(page, 'amp-env-release', 1);
   await setParam(page, 'amp-env-sustain', 0.5);
   await frames(page, 3);
@@ -101,6 +104,7 @@ test('envelope dots appear for a held note, advance through the release, and van
 
 test('the LFO marker travels along the cycle', async ({ page }) => {
   await start(page);
+  await showTab(page, 'Modulation');
   await setParam(page, 'lfo-rate', 1);
   await frames(page, 2);
   const a = await dots(page, 'lfo-plot');

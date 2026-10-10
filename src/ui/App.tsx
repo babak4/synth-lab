@@ -7,12 +7,12 @@ import './help/help.css';
 import { HelpLayout, HelpProvider } from './help/HelpDrawer';
 import './layout.css';
 import { KitDemo } from './KitDemo';
-import { SynthPanel } from './synth/SynthPanel';
+import { OutputStrip } from './OutputStrip';
+import { TabBar, TabPanel } from './Workspace';
 import { KeyboardZone } from './keyboard/KeyboardZone';
 import { useKeyboardPlayer } from './keyboard/useKeyboardPlayer';
 import { useUndoShortcuts } from './history/useUndoShortcuts';
 import { TopBar } from './TopBar';
-import { Zone } from './Zones';
 
 export function App() {
   useKeyboardPlayer();
@@ -22,14 +22,9 @@ export function App() {
     <HelpProvider>
       <div className="app">
         <TopBar />
-        <HelpLayout>
-          <main className="app-main">
-            <SynthPanel />
-            <KeyboardZone />
-            <Zone title="Composition" id="composition" collapsible>
-              <p className="placeholder">Tracks and piano roll arrive with the composition tool.</p>
-            </Zone>
-          </main>
+        <TabBar />
+        <HelpLayout footer={<div className="pinned"><OutputStrip /><KeyboardZone /></div>}>
+          <TabPanel />
         </HelpLayout>
       </div>
     </HelpProvider>

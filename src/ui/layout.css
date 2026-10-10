@@ -1,8 +1,22 @@
-.app { min-height: 100vh; }
-.app-main { container: main / inline-size; padding: 12px 16px 32px; display: grid; gap: 12px; max-width: 100%; box-sizing: border-box; }
+/* Fixed-viewport shell (plan T2.7): top bar, tab bar, tab body (the only thing that scrolls), pinned footer. */
+.app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.app-main { container: main / inline-size; padding: 10px 16px; display: grid; gap: 12px; max-width: 100%; box-sizing: border-box; align-content: start; }
 
-.topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.brand { font-size: 18px; margin: 0 8px 0 0; letter-spacing: 0.02em; }
+.tabbar { flex: 0 0 auto; display: flex; gap: 2px; padding: 0 16px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { font: 600 13px var(--font); padding: 8px 16px; background: none; color: var(--text-muted); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--text); }
+.tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--accent); }
+
+/* Output strip to the right of the keyboard where the width allows, directly above it otherwise. */
+.pinned { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px 12px; padding: 8px 16px; box-sizing: border-box; }
+.pinned > .zone { grid-column: 1; grid-row: 1; min-width: 0; }
+.output-strip { grid-column: 2; grid-row: 1; padding: 6px 10px; }
+.pinned .zone-body { padding-top: 8px; }
+@media (max-width: 1239px) { .pinned { grid-template-columns: minmax(0, 1fr); } .output-strip { grid-column: 1; grid-row: 1; } .pinned > .zone { grid-row: 2; } }
+.output-strip .section-head { margin-bottom: 4px; }
+
+.topbar { flex: 0 0 auto; z-index: 10; display: flex; align-items: center; gap: 10px 14px; padding: 6px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.brand { font-size: 18px; margin: 0 4px 0 0; letter-spacing: 0.02em; }
 .topbar-slot:empty { display: none; }
 .topbar .control { flex-direction: row; gap: 8px; }
 .topbar .knob { flex-direction: row; }
@@ -22,7 +36,7 @@
 .placeholder { color: var(--text-muted); margin: 0; }
 
 .preset-menu { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.preset-menu select, .preset-name input { font: inherit; padding: 4px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; max-width: 200px; }
+.preset-menu select, .preset-name input { font: inherit; padding: 4px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; max-width: 150px; }
 .preset-menu button { font: inherit; padding: 4px 8px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
 .preset-menu button:disabled { opacity: 0.5; cursor: not-allowed; }
 .preset-menu label { color: var(--text-muted); font-size: 12px; }

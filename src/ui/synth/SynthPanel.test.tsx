@@ -62,7 +62,7 @@ describe('every registry control is on the panel exactly once, with a help butto
   it('every section has a help button', () => {
     const { container } = mount();
     const sections = [...container.querySelectorAll('section.section')];
-    expect(sections.length).toBe(11); // osc, mixer, filter, amp env, filter env, lfo, voicing, dist, delay, reverb, master
+    expect(sections.length).toBe(10); // osc, mixer, filter, amp env, filter env, lfo, voicing, dist, delay, reverb (the output strip is pinned elsewhere)
     for (const s of sections) expect(within(s as HTMLElement).getAllByRole('button', { name: /^Help:/ }).length).toBeGreaterThan(0);
   });
 });

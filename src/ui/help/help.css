@@ -1,7 +1,8 @@
-.app-shell { display: grid; grid-template-columns: minmax(0, 1fr); }
-.app-shell.help-open { grid-template-columns: minmax(0, 1fr) 380px; }
-.app-content { min-width: 0; }
-.help-drawer { position: sticky; top: 65px; height: calc(100vh - 65px); background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; box-sizing: border-box; }
+.app-shell { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: 'content' 'footer'; }
+.app-shell.help-open { grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: 'content drawer' 'footer footer'; }
+.app-content { grid-area: content; min-width: 0; min-height: 0; overflow: auto; }
+.app-footer { grid-area: footer; border-top: 1px solid var(--border); background: var(--bg); min-width: 0; }
+.help-drawer { grid-area: drawer; min-height: 0; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; box-sizing: border-box; }
 .help-drawer[hidden] { display: none; }
 .help-head { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .help-head button, .help-body button:not(.help-link):not(.term), .trythis button { font: inherit; padding: 4px 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }

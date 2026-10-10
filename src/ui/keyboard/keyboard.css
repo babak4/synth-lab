@@ -1,4 +1,4 @@
-.kb-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.kb-controls { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .kb-controls .control { flex-direction: row; gap: 8px; }
 .kb-live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
 .kb-led { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
@@ -9,7 +9,7 @@
 .panic-btn { font: inherit; padding: 4px 10px; border: 1px solid var(--danger); background: var(--surface); color: var(--danger); border-radius: 6px; cursor: pointer; }
 
 .screen-keyboard { display: flex; align-items: stretch; gap: 4px; }
-.kb-scroller { overflow-x: auto; max-width: calc(36 * 24px); scrollbar-width: thin;
+.kb-scroller { overflow-x: auto; max-width: min(100%, calc(36 * 24px)); scrollbar-width: thin;
   /* Overlay scrollbars (macOS, WebKit) are drawn over the content; without this gap they cover the bottom
      of the white keys and swallow clicks aimed there. */
   padding-bottom: 16px; }

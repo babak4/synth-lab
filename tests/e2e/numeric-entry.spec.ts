@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 type Synth = {
   engine: { getPatch(): { params: Record<string, number | string | boolean> }; getVoiceStates(): unknown[] };
@@ -32,6 +33,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.waitForSelector('[data-testid=synth-panel]');
+  await showTab(page, 'Shape');
 });
 
 test('typing 2.5k into Cutoff moves the knob, the patch and the engine', async ({ page }) => {
@@ -48,6 +50,7 @@ test('typing 2.5k into Cutoff moves the knob, the patch and the engine', async (
 test('units work: times in ms, percentages, decibels in the top bar', async ({ page }) => {
   await (await edit(page, 'Amp attack', '300 ms')).press('Enter');
   expect((await state(page)).attack).toBeCloseTo(0.3, 6);
+  await showTab(page, 'Sound');
   await (await edit(page, 'Oscillator A level', '35')).press('Enter');
   expect((await state(page)).mixA).toBeCloseTo(0.35, 6);
   await (await edit(page, 'Master volume', '-6')).press('Enter');

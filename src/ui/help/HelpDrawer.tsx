@@ -3,6 +3,7 @@ import { useStore } from 'zustand';
 import { useServices } from '@/app/context';
 import { HELP } from '@/content/load';
 import { buildIndex } from '@/content/index-list';
+import { tabForHelpId } from '@/core/tabs';
 import { INDEX_ID } from '@/state/help-store';
 import { HelpContext, useHelp } from './help-context';
 import { BlocksView } from './render';
@@ -52,20 +53,21 @@ export function HelpProvider({ children }: { children: ReactNode }) {
 }
 
 /** The page shell: content on the left, the drawer beside it (the page reflows; nothing is covered). */
-export function HelpLayout({ children }: { children: ReactNode }) {
+export function HelpLayout({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   const { helpStore } = useServices();
   const isOpen = useStore(helpStore, (s) => s.isOpen);
   return (
     <div className={`app-shell${isOpen ? ' help-open' : ''}`}>
       <div className="app-content">{children}</div>
       <HelpDrawer />
+      {footer && <div className="app-footer">{footer}</div>}
     </div>
   );
 }
 
 function HelpDrawer() {
   const { close } = useHelp();
-  const { helpStore, presetStore } = useServices();
+  const { helpStore, presetStore, tabStore } = useServices();
   const { isOpen, current, canBack, canForward, scroll } = useStore(helpStore);
   const body = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -86,6 +88,13 @@ function HelpDrawer() {
     if (current) title.current?.focus({ preventScroll: true }); // scrolling here would undo the restored position
   }, [current]);
 
+  // Show the tab the entry belongs to, so the control it describes is on screen.
+  const tab = useStore(tabStore, (t) => t.tab);
+  useEffect(() => {
+    const target = current && current !== INDEX_ID ? tabForHelpId(current) : null;
+    if (target) tabStore.getState().select(target);
+  }, [current, tabStore]);
+
   // Outline the controls the entry describes.
   useEffect(() => {
     if (!current || current === INDEX_ID) return;
@@ -93,7 +102,7 @@ function HelpDrawer() {
     els.forEach((el) => el.classList.add('help-highlight'));
     els[0]?.scrollIntoView?.({ block: 'nearest' });
     return () => els.forEach((el) => el.classList.remove('help-highlight'));
-  }, [current]);
+  }, [current, tab]);
 
   if (!isOpen || !current) return <aside className="help-drawer" aria-label="Help" hidden />;
   const open = (id: string) => helpStore.getState().open(id);

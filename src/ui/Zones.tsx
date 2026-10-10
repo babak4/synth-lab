@@ -6,13 +6,15 @@ interface Props {
   children?: ReactNode;
   /** Composition can be collapsed to give the synth more room (PRD §2). */
   collapsible?: boolean;
+  /** Title is kept for screen readers but not drawn, to save height in the pinned band. */
+  compact?: boolean;
 }
 
-export function Zone({ title, id, children, collapsible }: Props) {
+export function Zone({ title, id, children, collapsible, compact }: Props) {
   const [open, setOpen] = useState(true);
   return (
     <section className="zone" aria-labelledby={`${id}-title`} data-zone={id}>
-      <header className="zone-head">
+      <header className={compact ? 'zone-head visually-hidden' : 'zone-head'}>
         <h2 id={`${id}-title`}>{title}</h2>
         {collapsible && (
           <button type="button" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => setOpen(!open)}>

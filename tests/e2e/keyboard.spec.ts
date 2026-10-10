@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 type Synth = {
   engine: { getVoiceStates(): { pitch: number; held: boolean }[] };
@@ -107,6 +108,7 @@ test('typing in a text field does not play notes', async ({ page }) => {
 });
 
 test('arrow keys on a focused knob adjust the knob, not the octave', async ({ page }) => {
+  await showTab(page, 'Shape');
   const octave = (await synth(page)).app.kbdOctave;
   await page.getByRole('slider', { name: 'Cutoff' }).focus();
   await page.keyboard.press('ArrowLeft');
