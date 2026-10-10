@@ -1,3 +1,4 @@
+import { useStore } from 'zustand';
 import { useApp, useServices } from '@/app/context';
 import { HelpButton, Knob } from './components';
 import { useHelp } from './help/help-context';
@@ -44,8 +45,8 @@ function AudioButton() {
 }
 
 function Tempo() {
-  const tempo = useApp((s) => s.tempo);
-  const { appStore } = useServices();
+  const { projectStore } = useServices();
+  const tempo = useStore(projectStore, (s) => s.project.tempo);
   return (
     <div className="tempo control" data-help-for="composition">
       <label htmlFor="tempo-input">Tempo</label>
@@ -56,7 +57,7 @@ function Tempo() {
         max={240}
         step={1}
         value={tempo}
-        onChange={(e) => appStore.getState().setTempo(Number(e.target.value))}
+        onChange={(e) => projectStore.getState().setTempo(Number(e.target.value))}
         aria-label="Tempo in beats per minute"
       />
       <span className="unit">BPM</span>

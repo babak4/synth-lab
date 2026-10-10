@@ -8,6 +8,7 @@ import { bindEngineToPatch, createPatchStore } from '@/state/patch-store';
 import { createHelpStore } from '@/state/help-store';
 import { createHistoryStore } from '@/state/history-store';
 import { createTabStore } from '@/state/tab-store';
+import { bindPatchToProject, createProjectStore } from '@/state/project-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createMemoryStorage } from '@/state/storage';
@@ -17,16 +18,21 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
   const engine = new MockEngine();
   const host = new MockAudioHost();
   const patchStore = createPatchStore();
+  const projectStore = createProjectStore();
   const appStore = createAppStore();
   const bus = new EventBus<EventMap>(); // a private bus per test: no cross-test leakage
   const presetStore = createPresetStore({ patchStore, storage: createMemoryStorage() });
   void presetStore.getState().init();
+  // Bound before the history store exists so loading the first track's patch is not an undo step.
+  bindPatchToProject(patchStore, projectStore, () => historyStore.history.clear());
   bindEngineToPatch(patchStore, engine);
   routeNotes(bus, () => engine);
   const { store: notesStore } = createNotesStore(bus);
   appStore.subscribe((s, prev) => {
     if (s.masterVolumeDb !== prev.masterVolumeDb) host.setMasterVolumeDb(s.masterVolumeDb);
-    if (s.tempo !== prev.tempo) engine.setTempo(s.tempo);
+  });
+  projectStore.subscribe((s, prev) => {
+    if (s.project.tempo !== prev.project.tempo) engine.setTempo(s.project.tempo);
   });
   const helpStore = createHelpStore();
   const historyStore = createHistoryStore(patchStore);
@@ -37,5 +43,5 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
     await host.start();
     appStore.getState().setAudio('on');
   };
-  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, tryThisStore, startAudio };
+  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, tryThisStore, startAudio };
 }

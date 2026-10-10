@@ -13,6 +13,7 @@ import type { PatchStore } from '@/state/patch-store';
 import type { HelpStore } from '@/state/help-store';
 import type { HistoryStore } from '@/state/history-store';
 import type { TabStore } from '@/state/tab-store';
+import type { ProjectStore } from '@/state/project-store';
 import type { PresetStore } from '@/state/preset-store';
 import type { TryThisStore } from '@/state/try-this';
 
@@ -26,6 +27,7 @@ export interface AppServices {
   /** Undo/redo for the patch. Every patch change is recorded automatically. */
   historyStore: HistoryStore;
   tabStore: TabStore;
+  projectStore: ProjectStore;
   tryThisStore: TryThisStore;
   /** The note/transport event bus. Everything that plays or records notes talks through this. */
   bus: EventBus<EventMap>;

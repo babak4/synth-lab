@@ -67,7 +67,9 @@ The first full 8×8 measurement was 1.4× real time offline and failed badly liv
    now run at control rate (once per 128-frame quantum, ~375 Hz), plenty for envelopes and LFOs ≤ 20 Hz.
 4. **Reverb tails shortened.** Impulses end at ~−66 dB (RT60 × 1.1), not ~−80 dB. Hall RT60 is 3.0 s.
 
-## Wiring requirement for the mixer (T5.1)
+## Wiring requirement for the mixer (T5.1, done)
+
+Done in `src/app/runtime.ts`: one `ReverbHub` and one `WebTrackMixer` for the project, and `TrackEngines` builds every track's engine with that hub.
 
 Create **one** `ReverbHub` per project, with the master input as its destination, and pass it to every
 `createSynthEngine(..., { reverbHub })`. Without it each engine builds a private hub, which sounds the

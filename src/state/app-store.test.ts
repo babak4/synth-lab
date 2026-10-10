@@ -7,7 +7,6 @@ describe('app store', () => {
     expect(s.masterVolumeDb).toBe(-12);
     expect(s.kbdOctave).toBe(0);
     expect(s.kbdVelocity).toBe(96);
-    expect(s.tempo).toBe(120);
     expect(s.audio).toBe('off');
   });
 
@@ -21,15 +20,5 @@ describe('app store', () => {
     expect(store.getState().kbdVelocity).toBe(127);
     store.getState().setGlobal('master-volume', 5);
     expect(store.getState().masterVolumeDb).toBe(0);
-  });
-
-  it('keeps tempo within 40–240 BPM', () => {
-    const store = createAppStore();
-    store.getState().setTempo(10);
-    expect(store.getState().tempo).toBe(40);
-    store.getState().setTempo(999);
-    expect(store.getState().tempo).toBe(240);
-    store.getState().setTempo(97.6);
-    expect(store.getState().tempo).toBe(98);
   });
 });

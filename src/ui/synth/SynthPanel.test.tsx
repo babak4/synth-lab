@@ -137,6 +137,6 @@ describe('top bar', () => {
   it('tempo is bounded to 40–240', () => {
     const { services } = mount();
     fireEvent.change(screen.getByLabelText('Tempo in beats per minute'), { target: { value: '999' } });
-    expect(services.appStore.getState().tempo).toBe(240);
+    expect(services.projectStore.getState().project.tempo).toBe(240);
   });
 });
