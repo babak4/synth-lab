@@ -1,34 +1,58 @@
-import { useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react';
 import { useStore } from 'zustand';
 import { useServices } from '@/app/context';
-import { contentTicksFor, indexFor, interpretKey, interpretWheel, ZOOM_STEP } from '@/core/piano-roll';
+import {
+  contentTicksFor,
+  dragged,
+  hitTest,
+  indexFor,
+  interpretEditKey,
+  interpretKey,
+  interpretWheel,
+  lengthTicks,
+  rowAt,
+  xToTick,
+  yToPitch,
+  ZOOM_STEP,
+} from '@/core/piano-roll';
+import type { Pointer } from '@/state/piano-roll-edit';
 import { selectedTrack } from '@/state/project-store';
 import { pianoRollView } from '@/state/piano-roll-view';
 import { useCanvas } from '@/ui/visualisers/useCanvas';
 import { drawPianoRoll, gridSize, KEY_WIDTH, RULER_HEIGHT, type FrameStats, type Scene } from './draw';
-import { useAudition } from './useAudition';
+import { EditToolbar } from './EditToolbar';
+import { useAudition, usePitchPreview } from './useAudition';
 import './piano-roll.css';
 
 export interface PianoRollProps {
-  /** Transport position in ticks; omit to hide the playhead. T5.2 supplies this. */
+  /** Transport position in ticks; omit to follow the transport store. */
   playheadTick?: number;
 }
 
 const HELP_TEXT =
-  'Arrow keys scroll, Page Up and Page Down scroll a page of pitches, plus and minus zoom time, ' +
+  'Editing: click an empty cell to add a note of the current length, drag to draw a longer one, drag a note to move it, ' +
+  'drag its right edge to resize, hold Alt to bypass snap, Shift click or drag a box to select. ' +
+  'With notes selected: up and down arrows transpose, Shift for an octave, left and right arrows nudge by the snap step, ' +
+  'Delete removes, Control or Command with D duplicates, C, X and V copy, cut and paste at the playhead, A selects all, Escape deselects. ' +
+  'Keyboard entry: press Enter to place a cursor, arrow keys move it, Enter adds a note or selects the note under it, Escape finishes. ' +
+  'With nothing selected and no cursor, arrow keys scroll, Page Up and Page Down scroll a page of pitches, plus and minus zoom time, ' +
   'left and right square brackets zoom pitch, F fits the view to the notes. Control and mouse wheel zooms time, ' +
   'Alt and mouse wheel zooms pitch, Shift and mouse wheel scrolls sideways.';
 
-/** Piano roll for the selected track: pitch up the side, bars and beats along the top. Rendering and view only. */
+/** Piano roll for the selected track: pitch up the side, bars and beats along the top. Editing goes through the edit store. */
 export function PianoRoll({ playheadTick }: PianoRollProps) {
-  const { projectStore } = useServices();
+  const { projectStore, pianoRollEdit, transportStore } = useServices();
   const project = useStore(projectStore, (s) => s.project);
   const track = useStore(projectStore, selectedTrack);
   const ghost = useStore(pianoRollView, (s) => s.ghostNotes);
+  const status = useStore(pianoRollEdit, (s) => s.status);
+  const auditionRequest = useStore(pianoRollEdit, (s) => s.audition);
   const helpId = useId();
   const stage = useRef<HTMLDivElement>(null);
   const frame = useRef<{ stats: FrameStats | null; draws: number }>({ stats: null, draws: 0 });
   const lastKey = useRef<unknown[]>([]);
+  const selectionSet = useRef<{ ids: readonly string[]; set: ReadonlySet<string> }>({ ids: [], set: new Set() });
+  const press = useRef<{ pointerId: number; x: number; y: number; moved: boolean } | null>(null);
 
   // Bounds: the timeline is as long as the song, or the farthest note of the selected track.
   const farthest = indexFor(track.notes).farthestEnd;
@@ -74,25 +98,130 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
     return () => el.removeEventListener('wheel', onWheel);
   }, [projectStore]);
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.target !== e.currentTarget) return;
-    const view = pianoRollView.getState();
-    const action = interpretKey(e, view.size);
-    if (!action) return;
-    e.preventDefault(); // also keeps the laptop-keyboard player from treating F, + … as notes
-    view.apply(action, selectedTrack(projectStore.getState()).notes);
+  // Audition requests from the edit store (a note was placed, or its pitch changed). Requests that were
+  // already pending when this component mounted (the roll was off screen) are not replayed.
+  const preview = usePitchPreview();
+  const seen = useRef(pianoRollEdit.getState().audition?.seq ?? 0);
+  useEffect(() => {
+    if (auditionRequest && auditionRequest.seq !== seen.current) {
+      seen.current = auditionRequest.seq;
+      preview(auditionRequest.pitch);
+    }
+  }, [auditionRequest, preview]);
+
+  // ---- pointer → music ---------------------------------------------------------------------
+
+  /** Grid-area pixel position of a pointer event, or null when it is outside the stage. */
+  const gridPoint = (e: PointerEvent<HTMLElement>): { x: number; y: number } => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - r.left - KEY_WIDTH, y: e.clientY - r.top - RULER_HEIGHT };
+  };
+  const toPointer = (pt: { x: number; y: number }, e: PointerEvent<HTMLElement>): Pointer => {
+    const vp = pianoRollView.getState().viewport;
+    return { tick: xToTick(vp, pt.x), pitch: yToPitch(vp, pt.y), row: rowAt(pt.y, vp.scrollY, vp.rowHeight), alt: e.altKey, shift: e.shiftKey };
   };
 
   const audition = useAudition(() => pianoRollView.getState().viewport);
+
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    audition.onPointerDown(e); // the piano column
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const pt = gridPoint(e);
+    if (pt.x < 0 || pt.y < 0) return;
+    const view = pianoRollView.getState();
+    if (pt.x >= view.size.width || pt.y >= view.size.height) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* synthesised pointers cannot always be captured; the gesture still works while the pointer stays over the grid */
+    }
+    press.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    const hit = hitTest(indexFor(selectedTrack(projectStore.getState()).notes), view.viewport, pt.x, pt.y);
+    pianoRollEdit.getState().press(hit ? { id: hit.note.id, zone: hit.zone } : null, toPointer(pt, e));
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    audition.onPointerMove(e);
+    const pr = press.current;
+    if (pr && pr.pointerId === e.pointerId) {
+      pr.moved ||= dragged(e.clientX - pr.x, e.clientY - pr.y);
+      pianoRollEdit.getState().drag(toPointer(gridPoint(e), e), pr.moved);
+      return;
+    }
+    // Hovering: show what a press would do.
+    const pt = gridPoint(e);
+    const view = pianoRollView.getState();
+    let cursor = '';
+    if (pt.x >= 0 && pt.y >= 0 && pt.x < view.size.width && pt.y < view.size.height) {
+      const hit = hitTest(indexFor(selectedTrack(projectStore.getState()).notes), view.viewport, pt.x, pt.y);
+      cursor = hit ? (hit.zone === 'resize' ? 'ew-resize' : 'grab') : pianoRollEdit.getState().tool === 'draw' ? 'crosshair' : 'default';
+    }
+    if (e.currentTarget.style.cursor !== cursor) e.currentTarget.style.cursor = cursor;
+  };
+
+  const endPress = (e: PointerEvent<HTMLDivElement>, commit: boolean) => {
+    const pr = press.current;
+    if (!pr || pr.pointerId !== e.pointerId) return;
+    press.current = null;
+    const edit = pianoRollEdit.getState();
+    if (commit) {
+      pr.moved ||= dragged(e.clientX - pr.x, e.clientY - pr.y);
+      edit.drag(toPointer(gridPoint(e), e), pr.moved);
+      edit.release();
+    } else {
+      edit.cancelGesture();
+    }
+  };
+
+  const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    audition.onPointerUp(e);
+    endPress(e, true);
+  };
+  const onPointerCancel = (e: PointerEvent<HTMLDivElement>) => {
+    audition.onPointerCancel(e);
+    endPress(e, false);
+  };
+
+  // ---- keyboard ----------------------------------------------------------------------------
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    const edit = pianoRollEdit.getState();
+    if (e.key === 'Escape' && press.current && edit.cancelGesture()) {
+      press.current = null;
+      e.preventDefault();
+      return;
+    }
+    const action = interpretEditKey(e, { hasSelection: edit.selection.length > 0, cursorActive: edit.cursor !== null });
+    if (action) {
+      e.preventDefault(); // also keeps Ctrl+D from bookmarking the page and the laptop-keyboard player from seeing the key
+      edit.runAction(action);
+      return;
+    }
+    const view = pianoRollView.getState();
+    const viewAction = interpretKey(e, view.size);
+    if (!viewAction) return;
+    e.preventDefault(); // also keeps the laptop-keyboard player from treating F, + … as notes
+    view.apply(viewAction, selectedTrack(projectStore.getState()).notes);
+  };
+
+  // ---- drawing -----------------------------------------------------------------------------
 
   const ref = useCanvas((args) => {
     const view = pianoRollView.getState();
     const { project: p } = projectStore.getState();
     const t = selectedTrack(projectStore.getState());
+    const edit = pianoRollEdit.getState();
+    const playhead = playheadTick ?? transportStore.getState().getPosition();
+    const shown = edit.preview && edit.preview.trackId === t.id ? edit.preview : null;
     // Nothing moved since the last frame → leave the pixels alone.
-    const key = [view.viewport, view.size, view.contentTicks, view.ghostNotes, p, t, playheadTick, args.width, args.height, args.colours, window.devicePixelRatio];
+    const key = [
+      view.viewport, view.size, view.contentTicks, view.ghostNotes, p, t, playhead, args.width, args.height, args.colours, window.devicePixelRatio,
+      edit.selection, shown, edit.cursor, edit.length,
+    ];
     if (key.length === lastKey.current.length && key.every((v, i) => v === lastKey.current[i])) return;
     lastKey.current = key;
+    if (selectionSet.current.ids !== edit.selection) selectionSet.current = { ids: edit.selection, set: new Set(edit.selection) };
     const scene: Scene = {
       project: p,
       track: t,
@@ -100,7 +229,11 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
       ghost: view.ghostNotes,
       viewport: view.viewport,
       contentTicks: view.contentTicks,
-      playheadTick,
+      playheadTick: playhead,
+      notes: shown?.notes ?? undefined,
+      selection: selectionSet.current.set,
+      box: shown?.box ?? null,
+      cursor: edit.cursor ? { ...edit.cursor, length: lengthTicks(edit.length) } : null,
     };
     frame.current.stats = drawPianoRoll(args, scene);
     frame.current.draws++;
@@ -139,6 +272,7 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
           Ghost notes
         </button>
       </div>
+      <EditToolbar />
       <div
         ref={stage}
         className="pr-stage"
@@ -148,13 +282,23 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
         aria-describedby={helpId}
         data-arrow-owner
         onKeyDown={onKeyDown}
-        {...audition}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onLostPointerCapture={(e) => {
+          audition.onLostPointerCapture(e);
+          if (press.current?.pointerId === e.pointerId) endPress(e, false);
+        }}
       >
         <canvas ref={ref} className="pr-canvas" data-viz="piano-roll" aria-hidden="true" />
       </div>
       <p id={helpId} className="visually-hidden">
         {HELP_TEXT}
       </p>
+      <div role="status" aria-live="polite" aria-atomic="true" className="visually-hidden" data-testid="piano-roll-status">
+        {status}
+      </div>
     </section>
   );
 }

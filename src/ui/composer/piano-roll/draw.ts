@@ -3,7 +3,7 @@
  * only turns rectangles and lines into pixels. One canvas holds the whole widget: the corner, the bar
  * ruler along the top, the piano column on the left and the note grid.
  */
-import { ticksPerBar, type Project, type Track } from '@/core/contracts/project';
+import { ticksPerBar, type Note, type Project, type Track } from '@/core/contracts/project';
 import {
   barLabelStep,
   gridLines,
@@ -11,9 +11,11 @@ import {
   keyRows,
   layoutVisibleNotes,
   loopSpan,
+  pitchToY,
   tickToX,
   velocityOpacity,
   visibleRange,
+  type Box,
   type Size,
   type Viewport,
 } from '@/core/piano-roll';
@@ -34,11 +36,20 @@ export interface Scene {
   /** Length of the scrollable timeline in ticks (for the scroll indicators). */
   contentTicks: number;
   playheadTick?: number;
+  /** Notes to draw instead of `track.notes` while a drag is previewing an edit. */
+  notes?: readonly Note[];
+  /** Ids of the selected notes. */
+  selection?: ReadonlySet<string>;
+  /** Selection rectangle being dragged. */
+  box?: Box | null;
+  /** Keyboard cursor: where Enter would add a note, and how long (ticks) that note would be. */
+  cursor?: { tick: number; pitch: number; length: number } | null;
 }
 
 /** What a frame drew, for tests and diagnostics. */
 export interface FrameStats {
   notes: number;
+  selectedNotes: number;
   ghostNotes: number;
   gridLines: number;
   playheadX: number | null;
@@ -56,7 +67,7 @@ const WHITE_KEY = '#f6f3ec';
 const BLACK_KEY = '#2a2a2e';
 
 export function drawPianoRoll({ ctx, width, height, colours }: DrawArgs, scene: Scene): FrameStats {
-  const stats: FrameStats = { notes: 0, ghostNotes: 0, gridLines: 0, playheadX: null, loop: { x0: 0, x1: 0, enabled: false } };
+  const stats: FrameStats = { notes: 0, selectedNotes: 0, ghostNotes: 0, gridLines: 0, playheadX: null, loop: { x0: 0, x1: 0, enabled: false } };
   const grid = gridSize(width, height);
   const { viewport: vp, project, track } = scene;
   const sig = project.timeSignature;
@@ -133,16 +144,66 @@ export function drawPianoRoll({ ctx, width, height, colours }: DrawArgs, scene: 
     ctx.globalAlpha = 1;
   }
 
-  // This track's notes: colour from the track, harder notes more opaque.
-  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  // This track's notes: colour from the track, harder notes more opaque; selected ones are outlined and lit.
+  const selection = scene.selection;
   ctx.lineWidth = 1;
-  for (const r of layoutVisibleNotes(indexFor(track.notes), vp, grid)) {
+  for (const r of layoutVisibleNotes(indexFor(scene.notes ?? track.notes), vp, grid)) {
     stats.notes++;
+    const selected = selection?.has(r.id) === true;
     ctx.globalAlpha = velocityOpacity(r.velocity);
     ctx.fillStyle = track.colour;
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.globalAlpha = 1;
-    if (r.w >= 4 && r.h >= 4) ctx.strokeRect(Math.round(r.x) + 0.5, Math.round(r.y) + 0.5, Math.max(1, r.w - 1), Math.max(1, r.h - 1));
+    if (selected) {
+      stats.selectedNotes++;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.strokeStyle = colours.text;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(r.x + 1, r.y + 1, Math.max(1, r.w - 2), Math.max(1, r.h - 2));
+      ctx.lineWidth = 1;
+    } else if (r.w >= 4 && r.h >= 4) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.strokeRect(Math.round(r.x) + 0.5, Math.round(r.y) + 0.5, Math.max(1, r.w - 1), Math.max(1, r.h - 1));
+    }
+    // Resize handle hint on the right edge of notes wide enough to have one.
+    if (r.w >= 14 && r.h >= 6) {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(r.x + r.w - 3, r.y + 2, 2, r.h - 4);
+    }
+  }
+
+  // Selection box.
+  if (scene.box) {
+    const x0 = tickToX(vp, scene.box.tick0);
+    const x1 = tickToX(vp, scene.box.tick1);
+    const y0 = pitchToY(vp, scene.box.pitch1 - 1);
+    const y1 = pitchToY(vp, scene.box.pitch0 - 1);
+    ctx.fillStyle = colours.accentSoft;
+    ctx.globalAlpha = 0.4;
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = colours.accent;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(x0 + 0.5, y0 + 0.5, Math.max(1, x1 - x0 - 1), Math.max(1, y1 - y0 - 1));
+    ctx.setLineDash([]);
+  }
+
+  // Keyboard cursor.
+  if (scene.cursor) {
+    const cx = tickToX(vp, scene.cursor.tick);
+    const cw = Math.max(6, scene.cursor.length * vp.pxPerTick);
+    const cy = pitchToY(vp, scene.cursor.pitch);
+    ctx.fillStyle = colours.text;
+    ctx.globalAlpha = 0.18;
+    ctx.fillRect(cx + 1, cy + 1, cw - 2, vp.rowHeight - 2);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = colours.text;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.strokeRect(cx + 1, cy + 1, cw - 2, vp.rowHeight - 2);
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
   }
 
   // Playhead.
