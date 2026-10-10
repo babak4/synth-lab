@@ -3,6 +3,7 @@ import { useStore } from 'zustand';
 import { useServices } from '@/app/context';
 import { TABS, type TabId } from '@/core/tabs';
 import { SynthPanel } from './synth/SynthPanel';
+import { PianoRoll } from './composer/piano-roll/PianoRoll';
 
 const tabDomId = (id: TabId) => `tab-${id}`;
 const panelDomId = (id: TabId) => `tabpanel-${id}`;
@@ -61,7 +62,7 @@ export function TabPanel(): ReactNode {
   return (
     <main className="app-main" role="tabpanel" id={panelDomId(tab)} aria-labelledby={tabDomId(tab)} data-tab={tab}>
       {tab === 'composition' ? (
-        <p className="placeholder">Tracks and piano roll arrive with the composition tool.</p>
+        <PianoRoll />
       ) : (
         <SynthPanel tab={tab} />
       )}
