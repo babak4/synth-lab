@@ -1,0 +1,6 @@
+.transport { display: flex; align-items: center; gap: 4px; }
+.transport button { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 28px; padding: 0 7px; font: 600 11px var(--font); line-height: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.transport button[aria-pressed='true'] { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.transport .transport-play[data-running='true'] { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.transport-count { letter-spacing: -0.02em; white-space: nowrap; }
+.transport-pos { min-width: 3.2em; text-align: center; font: 600 13px var(--font); font-variant-numeric: tabular-nums; color: var(--text); }

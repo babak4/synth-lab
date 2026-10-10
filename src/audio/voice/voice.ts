@@ -293,8 +293,12 @@ export class Voice {
 
   private startSources(time: number): void {
     this.started = true;
-    this.pitchCtl.start(time);
-    this.filterEnvSrc.start(time);
+    // ConstantSourceNode start times are only accurate to a render quantum (up to 2.7 ms late) in Chromium,
+    // while AudioParam automation is sample-accurate. So run the control sources from now (they output 0
+    // until their automation fires at `time`) and let the automation, not `start`, place the note.
+    const control = Math.min(time, this.ctx.currentTime);
+    this.pitchCtl.start(control);
+    this.filterEnvSrc.start(control);
     this.noiseSrc.start(time, Math.random() * this.noiseSrc.buffer!.duration);
     for (const s of Object.values(this.slots)) s.start(time);
   }

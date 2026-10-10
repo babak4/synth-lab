@@ -9,6 +9,7 @@ import { createHelpStore } from '@/state/help-store';
 import { createHistoryStore } from '@/state/history-store';
 import { createTabStore } from '@/state/tab-store';
 import { bindPatchToProject, createProjectStore } from '@/state/project-store';
+import { createTransportStore } from '@/state/transport-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createMemoryStorage } from '@/state/storage';
@@ -39,6 +40,7 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
   projectStore.subscribe((s, prev) => {
     if (s.project.tempo !== prev.project.tempo) engine.setTempo(s.project.tempo);
   });
+  const transportStore = createTransportStore({ projectStore, bus });
   const helpStore = createHelpStore();
   const historyStore = createHistoryStore(patchStore);
   const tabStore = createTabStore();
@@ -48,5 +50,5 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
     await host.start();
     appStore.getState().setAudio('on');
   };
-  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, projectFileStore, persistence, tryThisStore, startAudio };
+  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, startAudio };
 }
