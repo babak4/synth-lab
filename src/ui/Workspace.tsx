@@ -2,8 +2,8 @@ import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { useServices } from '@/app/context';
 import { TABS, type TabId } from '@/core/tabs';
+import { CompositionTab } from './composer/CompositionTab';
 import { SynthPanel } from './synth/SynthPanel';
-import { PianoRoll } from './composer/piano-roll/PianoRoll';
 
 const tabDomId = (id: TabId) => `tab-${id}`;
 const panelDomId = (id: TabId) => `tabpanel-${id}`;
@@ -62,7 +62,7 @@ export function TabPanel(): ReactNode {
   return (
     <main className="app-main" role="tabpanel" id={panelDomId(tab)} aria-labelledby={tabDomId(tab)} data-tab={tab}>
       {tab === 'composition' ? (
-        <PianoRoll />
+        <CompositionTab />
       ) : (
         <SynthPanel tab={tab} />
       )}

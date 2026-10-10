@@ -14,6 +14,8 @@ import type { HelpStore } from '@/state/help-store';
 import type { HistoryStore } from '@/state/history-store';
 import type { TabStore } from '@/state/tab-store';
 import type { ProjectStore } from '@/state/project-store';
+import type { ProjectFileStore } from '@/state/project-file-store';
+import type { ProjectPersistence } from '@/state/persistence';
 import type { PresetStore } from '@/state/preset-store';
 import type { TryThisStore } from '@/state/try-this';
 
@@ -28,6 +30,10 @@ export interface AppServices {
   historyStore: HistoryStore;
   tabStore: TabStore;
   projectStore: ProjectStore;
+  /** New / open / save as file, and the project name. */
+  projectFileStore: ProjectFileStore;
+  /** Autosave to browser storage and restore on startup. */
+  persistence: ProjectPersistence;
   tryThisStore: TryThisStore;
   /** The note/transport event bus. Everything that plays or records notes talks through this. */
   bus: EventBus<EventMap>;
