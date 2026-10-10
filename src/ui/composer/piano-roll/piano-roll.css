@@ -1,7 +1,8 @@
-/* Piano roll (plan T5.3a). It fills the Composition tab and scrolls inside its own canvas only. */
-.app-main[data-tab='composition'] { height: 100%; grid-template-rows: minmax(0, 1fr); }
-
-.piano-roll { display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 220px; min-width: 0; }
+/* Piano roll (plan T5.3a). The roll takes the height the track list leaves (at least 200 px); with many tracks the
+   tab body scrolls instead. The roll itself scrolls and zooms inside its canvas only. */
+.app-main[data-tab='composition'] { height: 100%; grid-template-rows: minmax(min-content, 1fr); }
+.composition { height: 100%; grid-template-rows: auto minmax(200px, 1fr); }
+.piano-roll { position: relative; display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 0; min-width: 0; }
 .pr-toolbar { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .pr-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; margin-right: 6px; }
 .pr-swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); }

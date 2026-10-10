@@ -25,15 +25,14 @@ const run = <T>(page: Page, fn: (s: Synth) => T): Promise<T> => page.evaluate(`(
 const view = (page: Page) => run(page, (s) => ({ ...s.pianoRoll.view.getState() }) as View);
 const frame = (page: Page) => run(page, (s) => s.pianoRoll.frame());
 
+// A tall window so the whole roll is on screen; the fixed-viewport test sets its own sizes.
+test.use({ viewport: { width: 1280, height: 1500 } });
+
 const KEY_WIDTH = 56;
 const RULER_HEIGHT = 24;
 
-function note(id: string, pitch: number, start: number, duration: number, velocity = 100): Note {
-  return { id, pitch, start, duration, velocity };
-}
-
 /** Open the Composition tab on a project with one track of notes around middle C and a second quieter one. */
-async function open(page: Page, opts: { second?: boolean } = {}) {
+async function open(page: Page) {
   await page.goto('/');
   await page.waitForSelector('[role=tabpanel]');
   await run(page, (s) => {
@@ -52,10 +51,10 @@ async function open(page: Page, opts: { second?: boolean } = {}) {
     p.tracks[1]!.notes = [{ id: 'g1', pitch: 55, start: 0, duration: 3840, velocity: 80 }, { id: 'g2', pitch: 52, start: 3840, duration: 3840, velocity: 80 }];
     st.loadProject(p);
   });
-  void opts;
   await showTab(page, 'Composition');
   await expect(page.getByRole('region', { name: 'Piano roll' })).toBeVisible();
   await expect.poll(async () => (await frame(page)).draws).toBeGreaterThan(0);
+  await stage(page).scrollIntoViewIfNeeded();
 }
 
 const stage = (page: Page) => page.getByRole('group', { name: /^Piano roll grid/ });
@@ -170,9 +169,9 @@ test('the wheel scrolls, Shift+wheel scrolls sideways, Ctrl+wheel zooms time at 
   expect(after.viewport.rowHeight).toBe(before.viewport.rowHeight);
 
   await page.keyboard.down('Alt');
-  await page.mouse.wheel(0, -200);
+  await page.mouse.wheel(0, 200); // zoom out: fit may already be at the maximum row height
   await page.keyboard.up('Alt');
-  await expect.poll(async () => (await view(page)).viewport.rowHeight).toBeGreaterThan(before.viewport.rowHeight);
+  await expect.poll(async () => (await view(page)).viewport.rowHeight).toBeLessThan(before.viewport.rowHeight);
   // The page itself never scrolled or zoomed.
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
@@ -273,24 +272,28 @@ test('pressing a piano key auditions that pitch through the bus, releasing stops
   expect(events.map(([k, e]) => [k, e.pitch])).toEqual([['on', 60], ['off', 60]]);
 });
 
-test('it fits the fixed viewport: nothing scrolls but the roll itself, at small and large window sizes', async ({ page }) => {
+test('it fits the fixed viewport: the page never scrolls, the tab body scrolls and the wheel over the roll does not scroll it', async ({ page }) => {
   for (const size of [{ width: 1280, height: 720 }, { width: 1280, height: 800 }, { width: 1024, height: 600 }]) {
     await page.setViewportSize(size);
     await open(page);
     const m = await page.evaluate(() => ({ sh: document.documentElement.scrollHeight, ih: window.innerHeight, sw: document.documentElement.scrollWidth, iw: window.innerWidth }));
     expect(m.sh, `${size.width}x${size.height} page height`).toBe(m.ih);
     expect(m.sw).toBeLessThanOrEqual(m.iw);
-    const body = await page.locator('.app-content').evaluate((el) => ({ sh: el.scrollHeight, ch: el.clientHeight }));
-    // The roll has a minimum height; in a very short window the tab body scrolls (inside itself), never the page.
-    if (size.height >= 720) expect(body.sh, `${size.width}x${size.height} tab body overflows`).toBeLessThanOrEqual(body.ch + 1);
     const st = (await stage(page).boundingBox())!;
     expect(st.height).toBeGreaterThan(100);
     expect(st.x).toBeGreaterThanOrEqual(0);
     expect(st.x + st.width).toBeLessThanOrEqual(size.width);
-    if (size.height >= 720) {
-      const kb = (await page.locator('[data-zone=keyboard]').boundingBox())!;
-      expect(st.y + st.height).toBeLessThanOrEqual(kb.y + 0.5); // the roll ends above the pinned keyboard
-    }
+    // Bring the roll into view inside the tab body; the pinned keyboard stays where it was.
+    const kb = (await page.locator('[data-zone=keyboard]').boundingBox())!;
+    await stage(page).scrollIntoViewIfNeeded();
+    expect(await page.locator('[data-zone=keyboard]').boundingBox()).toEqual(kb);
+    const top = await page.locator('.app-content').evaluate((el) => el.scrollTop);
+    const box = (await stage(page).boundingBox())!;
+    await page.mouse.move(box.x + KEY_WIDTH + 100, box.y + RULER_HEIGHT + 40);
+    await page.mouse.wheel(0, 200);
+    await expect.poll(async () => (await view(page)).viewport.scrollY).toBeGreaterThan(0);
+    expect(await page.locator('.app-content').evaluate((el) => el.scrollTop)).toBe(top);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   }
 });
 

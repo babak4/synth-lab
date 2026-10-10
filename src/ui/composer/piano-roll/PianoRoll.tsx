@@ -41,6 +41,7 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
     if (!el) return;
     const measure = () => pianoRollView.getState().setSize(gridSize(el.clientWidth, el.clientHeight));
     measure();
+    if (typeof ResizeObserver === 'undefined') return; // jsdom
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
