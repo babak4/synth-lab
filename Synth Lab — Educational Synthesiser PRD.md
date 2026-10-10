@@ -36,28 +36,28 @@ Assumed device: a laptop with a physical keyboard, running a recent Chrome, Edge
 
 ## 2. Product structure
 
-The app is a single page that fits one laptop screen (1280×720 and up) without scrolling. The top bar and the on-screen keyboard are always visible. Below the top bar, the synth's controls are grouped into tabs, and the composition tool is one of those tabs. A help drawer slides in from the right whenever a (?) is clicked, without hiding the controls it describes.
+The app is a single page that fits one laptop screen (1280×720 and up) without scrolling. The top bar, the on-screen keyboard and an output strip (oscilloscope, spectrum, meter) are always visible. Below the top bar, the synth's controls are grouped into tabs, and the composition tool is one of those tabs. A help drawer slides in from the right whenever a (?) is clicked, without hiding the controls it describes.
 
 | Zone | Contents | Notes |
 | --- | --- | --- |
 | Top bar | App name, preset menu, master volume, audio on/off, tempo, help index | Always visible. Audio starts on the first click (browser rule) |
-| Tab bar | Sound, Shape, Modulation, Effects, Output, Composition | Switch tabs instead of scrolling; the selected tab is remembered per viewer |
-| Tab body | The controls of the selected tab, laid out left to right in signal-flow order | Fills the space between the tab bar and the keyboard. Only scrolls if one tab is taller than the screen |
+| Tab bar | Sound, Shape, Modulation, Effects, Composition | Switch tabs instead of scrolling; the selected tab is remembered per viewer |
+| Tab body | The controls of the selected tab, laid out left to right in signal-flow order | Fills the space between the tab bar and the pinned band below. Only scrolls if one tab is taller than the space |
+| Output strip | Oscilloscope, spectrum analyser, level meter with clip indicator | Pinned with the keyboard; always visible, whichever tab is open, so every change can be seen as well as heard |
 | Keyboard | On-screen keys, octave and velocity controls, held-note display | Pinned to the bottom of the screen; always visible, whichever tab is open |
 | Help drawer | Content for the selected element | Opens beside, never over, the controls. Selecting help for a control on another tab switches to its tab |
 
-Tab groups (v1 proposal; the grouping is a single list in the code and can change):
+Tab groups (v1 proposal; the grouping is a single list in the code and can change). Master volume stays in the top bar, and the scope, spectrum and meter are in the always-visible output strip, so they need no tab:
 
 - **Sound:** oscillators, mixer.
 - **Shape:** filter, filter envelope, amp envelope.
 - **Modulation:** LFO, voicing.
 - **Effects:** distortion, delay, reverb.
-- **Output:** master volume and the visualisers (oscilloscope, spectrum, meter).
 - **Composition:** track list, piano roll and transport (see section 6).
 
 ### Principles
 
-- **Signal-flow layout.** Tabs are ordered the way sound travels (sound, shape, modulation, effects, output), and within each tab the sections sit in signal-flow order with thin connector lines between them, so the layout itself teaches the architecture.
+- **Signal-flow layout.** Tabs are ordered the way sound travels (sound, shape, modulation, effects), the output strip shows the result at all times, and within each tab the sections sit in signal-flow order with thin connector lines between them, so the layout itself teaches the architecture.
 - **Simple by default.** Each section shows its essential controls. Advanced controls (where v1 has any) sit behind a "more" toggle.
 - **Everything is explainable.** Every section title and every control has a (?) button. No control ships without help content.
 - **See what you hear.** Each section that shapes sound shows a small live plot of its effect.
@@ -69,10 +69,13 @@ Tab groups (v1 proposal; the grouping is a single list in the code and can chang
 
 The look is a deliberate step up from a plain form: it should feel like an instrument, and it should show which signals are related.
 
-- Three themes ship: a dark graphite default, a warm light theme with walnut and aluminium tones, and a high-contrast theme in the style of green-on-dark displays. The user chooses one in the top bar.
-- Each signal type has its own accent colour (audio path, modulation, effects, keyboard), so sections stay distinguishable in every theme.
-- The themes are informed by the look of hardware and software synths (for example, the contrast of a green panel on a dark body, and the wood and aluminium of a small analogue-style panel), but they copy no specific product's trade dress or artwork.
-- Every theme meets WCAG 2.2 AA contrast for text and controls.
+- **The colour theme follows Xfer Records' Serum 2** (default skin): near-black panels, slate-grey control strips, dark teal displays, and bright accents that each mean one thing. The palette, sampled from Xfer's own product screenshots, is in the implementation plan (Phase 7).
+- One accent colour per role, as in Serum: green for sound sources, cyan for the filter, envelopes, LFO and other modulation, deep blue for the selected tab or item, yellow for the current position (a playhead, the wavetable frame), purple for the arpeggiator and recording.
+- It is a single dark theme, used whether the operating system is set to light or dark. The current light theme is retired.
+- Only the colours are adopted. Serum's logo, wordmark, artwork and control graphics are not copied.
+- The theme meets WCAG 2.2 AA contrast for text and controls.
+
+Source: [Xfer Records: Serum 2](https://www.xferrecords.com/products/serum-2).
 
 ## 3. Synth engine
 
@@ -386,5 +389,6 @@ Measured in moderated sessions with 8–10 beginners, plus optional, anonymous, 
 - [ ] Should a chorus effect join v1, given how central it is to classic polysynth sounds?
 - [ ] Who writes and who technically reviews the help content?
 - [ ] Free and open source, or a paid product? This affects hosting, analytics and content licensing.
-- [ ] Confirm the tab grouping in section 2 (which sections share a tab, and whether Output or Composition should come first).
-- [ ] Which of the three visual themes is the default for the first release?
+- [ ] Confirm the tab grouping in section 2 (which sections share a tab).
+- [x] Scope and spectrum stay visible on every tab (resolved: the always-visible output strip in section 2).
+- [x] Colour theme (resolved: Serum 2's palette, section 2.1).

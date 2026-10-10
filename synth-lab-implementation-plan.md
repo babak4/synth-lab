@@ -168,9 +168,9 @@ Phase 6  T6.1–T6.4 after phases 2–5
 | 14 | 5 | T6.2 Performance profiling and fixes | Sonnet 5.5 | high | waves 1–4; a human runs `/bench.html` on an M1 | T6.1, T6.3, T6.4 |
 | 15 | 5 | T6.3 Cross-browser end-to-end suite | Sonnet 5.5 | medium | waves 1–4 | T6.1, T6.2, T6.4 |
 | 16 | 5 | T6.4 PWA, bundle budget and deploy | Haiku 5.5 | low | waves 1–4 | T6.1, T6.2, T6.3 |
-| 17 | 6 | T7.1 Theme tokens and palettes | Sonnet 5.5 | medium | T2.7 | any wave after wave 1 (spare capacity) |
+| 17 | 6 | T7.1 Serum-based theme tokens | Sonnet 5.5 | medium | T2.7 | any wave after wave 1 (spare capacity) |
 | 18 | 6 | T7.2 Section and panel styling | Sonnet 5.5 | medium | T7.1 | T7.3 |
-| 19 | 6 | T7.3 Theme chooser | Haiku 5.5 | low | T7.1 | T7.2 |
+| 19 | 6 | T7.3 Visual review against the reference | Haiku 5.5 | low | T7.1 | T7.2 |
 | — | — | T4.6 Independent accuracy review, then expert sign-off | Sonnet 5.5 (fresh context), then a human | high | T4.7 | anything |
 
 Notes:
@@ -365,21 +365,23 @@ Notes:
 - **Depends on:** T2.1, T2.2, T3.2, T4.1 (all done). Can be built in parallel with T2.6; merge after it, then check that typed values work inside every tab.
 - **Deliverables:**
   - **Keyboard pinned to the bottom of the viewport.** It stays visible and in place while any tab is open, with the help drawer open or closed, and while the page is scrolled (there should be nothing to scroll on a normal screen, but this holds if there is). The keyboard's own horizontal scroller still works.
+  - **Output strip pinned with the keyboard.** The oscilloscope, spectrum analyser and level meter (with its clip indicator) are always visible, whichever tab is open (PRD §2, goal 5). They share the pinned band with the keyboard, to its right where the width allows and directly above it otherwise, so the band costs as little height as possible. Master volume stays in the top bar, so there is no Output tab.
   - **Tab bar** under the top bar with one tab per group. Proposed grouping (confirm before building; each group is one registry section list, so the groups are easy to change):
     - *Sound*: Oscillators, Mixer
     - *Shape*: Filter, Filter envelope, Amp envelope
     - *Modulation*: LFO, Voicing
     - *Effects*: Distortion, Delay, Reverb
-    - *Output*: Master and visualisers (scope, spectrum, meter)
     - *Composition*: placeholder until Phase 5, then the track list and piano roll
   - Tabs follow the WAI-ARIA tabs pattern: `role="tablist"`, arrow keys move between tabs, Home and End jump to the ends, the active tab is in the tab order. Tab switching is UI state only; it does not affect the patch, the engine or the keyboard player.
   - **Help links switch tabs.** Opening help for a control on another tab switches to that tab, so the highlighted control is visible. The `?` key and the index behave the same way.
   - The selected tab is remembered per viewer in `localStorage` (a per-viewer convenience only, per the project's storage rules). Storage failures fall back to the default tab.
   - Layout uses the viewport height (`100dvh`) so the keyboard and tab bar fit a 1280×720 or 1280×800 window. The tab body fills the remaining space. If a single tab is taller than that space, only that tab's body scrolls, and the keyboard and tab bar stay in place.
   - The help drawer keeps its current behaviour (beside the content, never over the controls); with the drawer open, the tab body narrows and the keyboard stays full width at the bottom.
-  - Visualisers (scope, spectrum, meter, plots) keep working in every tab; they keep a single shared frame loop (`raf-loop.ts`).
+  - Visualisers keep a single shared frame loop (`raf-loop.ts`). The section plots (filter response, envelopes, LFO) live in their tabs; only visible canvases draw, so hidden tabs cost nothing.
+  - Precedent: Serum 2 uses the same arrangement, with OSC, MIX, FX, MATRIX and GLOBAL tabs and a keyboard pinned along the bottom.
 - **Acceptance:**
-  - Playwright on Chromium, Firefox and WebKit at 1280×720 and 1280×800 with the help drawer open and closed: `document.documentElement.scrollHeight` equals the viewport height for every tab, and the keyboard's bounding box is fully inside the viewport.
+  - Playwright on Chromium, Firefox and WebKit at 1280×720 and 1280×800 with the help drawer open and closed: `document.documentElement.scrollHeight` equals the viewport height for every tab, and the bounding boxes of the keyboard, the scope and the spectrum are fully inside the viewport on every tab.
+  - The scope keeps drawing (its canvas changes) while each tab is open and a note is held.
   - A tab whose content is taller than the space available scrolls inside the tab body only; the test checks that the page itself never scrolls and that the keyboard and tab bar stay in place while that tab scrolls.
   - Tab keyboard behaviour is tested (arrows, Home, End, Tab order) and axe passes with each tab open.
   - Switching tabs does not change the patch, stop notes, or interrupt a held note (checked against the engine state).
@@ -576,41 +578,45 @@ Split into three tasks so the hardest part is isolated.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 
-### Phase 7 — Visual themes (later)
+### Phase 7 — Serum-based colour theme (later)
 
-The current look is functional but plain. These tasks restyle it. They do not change behaviour, registry or engine. They are lowest priority, but they only need T2.7, so they can run alongside later waves (section 4a).
+The current look is functional but plain. These tasks restyle the app with the colour theme of Xfer Records' Serum 2 (PRD §2.1). They do not change behaviour, registry or engine. They are lowest priority, but they only need T2.7, so they can run alongside later waves (section 4a).
 
-**Research basis (October 2026 web search; text results only, no screenshots were examined; re-check before implementing):**
-- Yamaha DX7: a high-contrast pairing, dark brown body with a bright green panel, chosen so membrane switches stay readable. [Yamaha Design Insights DX7](https://www.yamaha.com/en/tech-design/design/insights/id_009/)
-- Hardware convention: black and dark grey are the most common front-panel colours. [SDIY wiki: Panel (homebrew)](https://sdiy.info/wiki/Panel_(homebrew)?oldid=7119)
-- Moog Little Phatty: a control panel angled steeply towards the player, with a slim wave-shaped aluminium profile. [Axel Hartmann Design: Moog Little Phatty](https://axelhartmanndesign.com/moog-little-patty)
-- Korg minilogue: real wood sides and back with a brushed aluminium front; the design is about "new vintage" warmth. [Korg minilogue design](https://www.korg.com/us/products/synthesizers/minilogue/design.php)
-- Massive X 1.1: separate Dark, Light and Flat variants of the skin. Users say the dark skin loses clear section separation. [Synth Anatomy: Massive X 1.1](https://synthanatomy.com/2019/11/massive-x-1-1-improves-a-lot-but-not-everything-envelope-visualization.html), [MusicTech: Massive X 1.1](https://musictech.com/news/massive-x-1-1/)
-- Vital: the default skin colour-codes sections to show what is being modulated; single-colour community skins are a usability concern raised on the Vital forum. [Vital forum: skin pack thread](https://forum.vital.audio/t/black-metal-red-ice-vital-skin-pack/5549)
-- Serum: a mostly dark grey base with small bright accents for feedback. [Emastered: Serum vs Massive](https://emastered.com/blog/serum-vs-massive)
+**Reference palette.** Sampled (October 2026) from the official Serum 2 screenshot on Xfer's product page ([Xfer Records: Serum 2](https://www.xferrecords.com/products/serum-2), image `serum2_promo-….png`, 2380×1480). Values are the most common pixel colours in each region, rounded down to multiples of 4, so treat them as ±4 per channel.
 
-**Not confirmed:** the exact default palettes of Serum, Vital, Pigments, Massive X and the Prophet/Juno/Minimoog panels. The searches did not reach their colour values. Before T7.1, pull the screenshots from the vendor product pages and the manuals and record the actual colours. Do not copy a specific synth's trade dress; use the principles above.
+| Role in Serum 2 | Colour | Use in Synth Lab |
+| --- | --- | --- |
+| Darkest background: tab buttons, lower panels, preset bar | `#181c20` | page background, tab bar, top bar |
+| Panel backgrounds | `#202428`, `#242c30` | section frames, drawer, macro-like areas |
+| Display backgrounds (oscillator and filter displays) | `#1c282c` to `#283434` | scope, spectrum, filter/envelope/LFO plots |
+| Slate control strip and section headers | `#8090a0` (lighter `#90a4b4`) | knob areas and section headers, with dark text |
+| Main accent: filter, envelopes, LFO paths, preset name | cyan `#00b0f0` to `#30c4fc` | cutoff, envelope and LFO traces, links, focus ring, modulation |
+| Selected tab | deep blue `#005c8c` | selected tab, selected segment, pressed toggle |
+| Oscillator on-lights and waveforms | green `#70b040`, lime `#90e050` | oscillator and sound-source accents, "on" LEDs, scope trace |
+| Current wavetable frame | yellow `#f0f000` | playhead, current-position markers, envelope dots |
+| Arpeggiator | purple `#a45cf4` | recording arm and record state (Phase 5) |
+| White keys | pale blue-grey `#c0d4e4` to `#cce0f0` | on-screen white keys |
 
-#### T7.1 Theme tokens and palettes
-- **Deliverables:** three themes built from the existing CSS variables in `src/ui/theme/theme.css`:
-  - *Graphite* (default dark): dark grey base, one warm accent for active states, one cool accent for modulation.
-  - *Walnut and aluminium* (warm light): cream panel, brown section headers, aluminium-grey controls, minilogue-like.
-  - *Phosphor* (high contrast): near-black, bright green for values and active states, after the DX7 pairing.
-- Keep one accent colour per signal type (audio path, modulation, effects, keyboard) so sections stay distinguishable in every theme. This answers the Massive X and Vital concerns above.
-- Each theme passes the WCAG 2.2 AA contrast checks that `theme.test.ts` already runs; add the new palettes to that test.
-- **Acceptance:** all three themes pass the contrast tests; the theme switch persists in `localStorage` (per-viewer convenience only, per the project's rules); a visual regression screenshot per theme is recorded in `docs/`.
+Not sampled: text colours. Serum shows near-white text on the dark panels and dark text on the slate strips; pick exact values in T7.1 so every pairing passes AA.
+
+#### T7.1 Serum-based theme tokens
+- **Deliverables:** replace the colour tokens in `src/ui/theme/theme.css` with the palette above, mapped role by role (the "Use in Synth Lab" column). One dark theme, used whatever the OS setting is; the current light theme and the `prefers-color-scheme` and `data-theme` switching are removed.
+- Accent per role, as in Serum: green for sources, cyan for filter and modulation, deep blue for selection, yellow for position, purple for recording.
+- Add the new pairings to the WCAG 2.2 AA tests in `theme.test.ts`: text on each background, dark text on slate, white text on deep blue, accents on the display background, the focus ring on every background.
+- Only colours are adopted: no Serum logo, wordmark, artwork or bitmap control graphics.
+- **Acceptance:** all contrast tests pass; the canvases (scope, spectrum, plots, diagrams) read their colours from the new tokens; a screenshot of each tab is saved in `docs/`, with a link to the Serum reference (do not copy Xfer's image into the repo).
 - **Complexity:** S
 - **Model:** Sonnet 5.5, medium effort
 
 #### T7.2 Section and panel styling
-- **Deliverables:** section headers and borders styled per signal type; knob and slider skins (a bright cap or pointer in the theme accent, a visible value arc); a subtle panel texture option off by default for reduced-motion and print friendliness.
-- **Acceptance:** layout snapshot test still passes; no text drops below AA contrast in any theme; reduced-motion disables any animated effect.
+- **Deliverables:** slate control strips under each section's knobs and dark display wells behind the plots, as in Serum; section headers in slate with dark text; knob caps and value arcs in the role accent; toggles with green "on" LEDs; the selected tab and segment in deep blue; the on-screen keyboard's white keys in pale blue-grey.
+- **Acceptance:** layout snapshot test still passes; no text drops below AA contrast; reduced-motion disables any animated effect.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, medium effort
 
-#### T7.3 Theme chooser and visual review
-- **Deliverables:** a Theme control in the top bar (a `Select` from the control kit, with a help entry).
-- **Acceptance:** chooser is keyboard-operable; a human reviews all three themes on a real screen at 1280 px and on a dark-mode OS and signs them off.
+#### T7.3 Visual review against the reference
+- **Deliverables:** compare every tab, the help drawer and the output strip with the Serum reference screenshot; list and fix colour mismatches and contrast problems; record before/after screenshots in `docs/`.
+- **Acceptance:** a human reviews the result on a real screen at 1280 px and signs it off.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 
@@ -661,9 +667,9 @@ The current look is functional but plain. These tasks restyle it. They do not ch
 | T6.2 | Performance | M | to do | Sonnet 5.5 | high | 5 |
 | T6.3 | Cross-browser e2e | M | to do | Sonnet 5.5 | medium | 5 |
 | T6.4 | PWA and deploy | S | to do | Haiku 5.5 | low | 5 |
-| T7.1 | Theme tokens and palettes | S | to do | Sonnet 5.5 | medium | 6 |
+| T7.1 | Serum-based theme tokens | S | to do | Sonnet 5.5 | medium | 6 |
 | T7.2 | Section and panel styling | M | to do | Sonnet 5.5 | medium | 6 |
-| T7.3 | Theme chooser | S | to do | Haiku 5.5 | low | 6 |
+| T7.3 | Visual review against the reference | S | to do | Haiku 5.5 | low | 6 |
 | T4.6 ★ | Accuracy review (independent + human) | M | to do | Sonnet 5.5, then a human | high | — |
 
 ★ = needs a fresh-context review by a Sonnet 5.5 reviewer (high effort) before merge.
