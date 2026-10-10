@@ -143,10 +143,11 @@ Phase 6  T6.1–T6.4 after phases 2–5
 Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are defined there).
 
 1. **T2.6 Editable numeric readouts** (priority: do this before anything else)
-2. Phase 5 — composition tool (T5.1 to T5.7)
-3. T4.6 — independent accuracy review and human sign-off of the help content (not an agent task; see `docs/content-review.md`)
-4. Phase 6 — quality and release (T6.1 to T6.4)
-5. Phase 7 — visual themes (T7.1 to T7.3; deferred until after release)
+2. **T2.7 Fixed-viewport tabbed layout** (priority: keyboard always visible; tabs instead of scrolling)
+3. Phase 5 — composition tool (T5.1 to T5.7)
+4. T4.6 — independent accuracy review and human sign-off of the help content (not an agent task; see `docs/content-review.md`)
+5. Phase 6 — quality and release (T6.1 to T6.4)
+6. Phase 7 — visual themes (T7.1 to T7.3; deferred until after release)
 
 ---
 
@@ -327,6 +328,34 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
   - axe passes with an editor open.
 - **Complexity:** S
 - **Model:** Sonnet 5.5, medium effort
+
+#### T2.7 Fixed-viewport tabbed layout ★ (priority 2)
+- **Why:** the synth panel is now taller than a laptop screen, so the on-screen keyboard and the bottom zones scroll out of view. Players need the keyboard visible at all times, and they should not have to scroll to reach other controls.
+- **Goal:** on a normal laptop screen, nothing scrolls. Controls are grouped into tabs, and you switch between tabs instead of scrolling. A tab only scrolls if its own contents are taller than the space available.
+- **Depends on:** T2.1 (panel layout), T2.2 (section panels), T3.2 (on-screen keyboard), T4.1 (help drawer), T2.6 (numeric entry, which must work inside tabs).
+- **Deliverables:**
+  - **Keyboard pinned to the bottom of the viewport.** It stays visible and in place while any tab is open, with the help drawer open or closed, and while the page is scrolled (there should be nothing to scroll on a normal screen, but this holds if there is). The keyboard's own horizontal scroller still works.
+  - **Tab bar** under the top bar with one tab per group. Proposed grouping (confirm before building; each group is one registry section list, so the groups are easy to change):
+    - *Sound*: Oscillators, Mixer
+    - *Shape*: Filter, Filter envelope, Amp envelope
+    - *Modulation*: LFO, Voicing
+    - *Effects*: Distortion, Delay, Reverb
+    - *Output*: Master and visualisers (scope, spectrum, meter)
+    - *Composition*: placeholder until Phase 5, then the track list and piano roll
+  - Tabs follow the WAI-ARIA tabs pattern: `role="tablist"`, arrow keys move between tabs, Home and End jump to the ends, the active tab is in the tab order. Tab switching is UI state only; it does not affect the patch, the engine or the keyboard player.
+  - **Help links switch tabs.** Opening help for a control on another tab switches to that tab, so the highlighted control is visible. The `?` key and the index behave the same way.
+  - The selected tab is remembered per viewer in `localStorage` (a per-viewer convenience only, per the project's storage rules). Storage failures fall back to the default tab.
+  - Layout uses the viewport height (`100dvh`) so the keyboard and tab bar fit a 1280×720 or 1280×800 window. The tab body fills the remaining space. If a single tab is taller than that space, only that tab's body scrolls, and the keyboard and tab bar stay in place.
+  - The help drawer keeps its current behaviour (beside the content, never over the controls); with the drawer open, the tab body narrows and the keyboard stays full width at the bottom.
+  - Visualisers (scope, spectrum, meter, plots) keep working in every tab; they keep a single shared frame loop (`raf-loop.ts`).
+- **Acceptance:**
+  - Playwright on Chromium, Firefox and WebKit at 1280×720 and 1280×800 with the help drawer open and closed: `document.documentElement.scrollHeight` equals the viewport height for every tab, and the keyboard's bounding box is fully inside the viewport.
+  - Each tab's largest content fits the viewport at 1280×720; any tab that does not is listed in the test as a known exception and must be fixed before release.
+  - Tab keyboard behaviour is tested (arrows, Home, End, Tab order) and axe passes with each tab open.
+  - Switching tabs does not change the patch, stop notes, or interrupt a held note (checked against the engine state).
+  - Opening help for a control on another tab selects that tab and highlights the control.
+- **Complexity:** M
+- **Model:** Sonnet 5.5, high effort (layout and keyboard focus are easy to get subtly wrong)
 
 ---
 
@@ -591,6 +620,7 @@ The current look is functional but plain. These tasks restyle it. They do not ch
 | T6.3 | Cross-browser e2e | M | Sonnet 5.5 | medium |
 | T6.4 | PWA and deploy | S | Haiku 5.5 | low |
 | T2.6 ★ | Editable numeric readouts (priority 1) | S | Sonnet 5.5 | medium |
+| T2.7 ★ | Fixed-viewport tabbed layout (priority 2) | M | Sonnet 5.5 | high |
 | T7.1 | Theme tokens and palettes | S | Sonnet 5.5 | medium |
 | T7.2 | Section and panel styling | M | Sonnet 5.5 | medium |
 | T7.3 | Theme chooser and visual review | S | Haiku 5.5 | low |
