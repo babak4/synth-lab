@@ -6,6 +6,7 @@ import { routeNotes } from './note-router';
 import { createAppStore } from '@/state/app-store';
 import { bindEngineToPatch, createPatchStore } from '@/state/patch-store';
 import { createHelpStore } from '@/state/help-store';
+import { createHistoryStore } from '@/state/history-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createMemoryStorage } from '@/state/storage';
@@ -27,11 +28,12 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
     if (s.tempo !== prev.tempo) engine.setTempo(s.tempo);
   });
   const helpStore = createHelpStore();
+  const historyStore = createHistoryStore(patchStore);
   const tryThisStore = createTryThisStore({ patchStore, bus, now: () => host.currentTime });
   const startAudio = async () => {
     appStore.getState().setAudio('starting');
     await host.start();
     appStore.getState().setAudio('on');
   };
-  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, tryThisStore, startAudio };
+  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tryThisStore, startAudio };
 }

@@ -3,11 +3,18 @@ import { HelpButton, Knob } from './components';
 import { useHelp } from './help/help-context';
 import { INDEX_ID } from '@/state/help-store';
 import { PresetMenu } from './PresetMenu';
+import { UndoRedo } from './history/UndoRedo';
 
 function MasterVolume() {
   const volume = useApp((s) => s.masterVolumeDb);
   const { appStore } = useServices();
-  return <Knob id="master-volume" value={volume} onChange={(v) => appStore.getState().setGlobal('master-volume', v)} />;
+  return (
+    <Knob
+      id="master-volume"
+      value={volume}
+      onChange={(v) => appStore.getState().setGlobal('master-volume', v)}
+    />
+  );
 }
 
 function AudioButton() {
@@ -72,6 +79,7 @@ export function TopBar() {
     <header className="topbar">
       <h1 className="brand">Synth Lab</h1>
       <PresetMenu />
+      <UndoRedo />
       <MasterVolume />
       <AudioButton />
       <Tempo />
