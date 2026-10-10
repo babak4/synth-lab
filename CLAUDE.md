@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Run everything from the repo root. Node 22+ is what CI uses.
 
 ```bash
+make                        # installs deps on first run, then starts the dev server (opens the browser)
 npm install
 npm run dev                 # Vite dev server on :5173 (also used by e2e tests on :5174)
 npm run check               # typecheck + lint + unit/audio tests + content check (what CI runs)
@@ -68,4 +69,4 @@ Synth Lab is a browser subtractive synth with a keyboard player, and a planned m
 - Keyboard player and help both claim `?`/Esc/arrow keys; check their guards (`isTypingTarget`, `[data-arrow-owner]`, `isHelpKey`) before adding global key handling.
 - Canvas visualisers all subscribe to one `requestAnimationFrame` loop in `ui/visualisers/raf-loop.ts`; do not add a loop per canvas.
 - Phase status and remaining work are tracked in `synth-lab-implementation-plan.md`. Phase 5 (sequencer, piano roll, undo, recording, persistence) and T6 are not implemented.
-- Nothing has been committed to git yet.
+- Work is on `main` and pushed to `origin` (github.com/babak4/synth-lab). `README.md` holds the user-facing overview and roadmap; keep it in step when a phase completes.
