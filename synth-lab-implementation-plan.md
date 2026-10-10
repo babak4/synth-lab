@@ -657,7 +657,7 @@ Not sampled: text colours. Serum shows near-white text on the dark panels and da
 | T2.7 ★ | Fixed-viewport tabbed layout | M | done (★ review open) | Sonnet 5.5 | high | 1 |
 | T5.1 | Project state and multi-track audio | M | done | Sonnet 5.5 | high | 1 |
 | T5.4 | Undo/redo | M | done | Sonnet 5.5 | medium | 1 |
-| T5.2 ★ | Sequencer scheduler and transport | L | to do | Sonnet 5.5 | high | 2 |
+| T5.2 ★ | Sequencer scheduler and transport | L | done (review pending) | Sonnet 5.5 | high | 2 |
 | T5.3a | Piano roll rendering | M | to do | Sonnet 5.5 | high | 2 |
 | T5.6 | Track list | M | to do | Sonnet 5.5 | medium | 2 |
 | T5.7 | Persistence | S | to do | Haiku 5.5 | medium | 2 |

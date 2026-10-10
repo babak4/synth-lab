@@ -102,7 +102,7 @@ const win = (x: Float32Array, from: number, to: number) => x.subarray(Math.round
 
 describe('Sequencer through an OfflineAudioContext', () => {
   it('16 bars of 1/16 notes at 120 BPM start within 1 ms of their targets', async () => {
-    const notes = Array.from({ length: 256 }, (_, i) => note(`n${i}`, 69, i * 240, 120));
+    const notes = Array.from({ length: 256 }, (_, i) => note(`n${i}`, 108, i * 240, 120));
     const s = await session(projectWith(notes), { seconds: 34 });
     s.seq.start(0, false);
     const out = await s.render(33);
@@ -112,23 +112,25 @@ describe('Sequencer through an OfflineAudioContext', () => {
   }, 60_000);
 
   it('a loop is seamless: notes spanning the loop end are cut and re-triggered, nothing doubled or missed', async () => {
-    // Loop bars 1–2 (4 s per pass at 120 BPM), played from its start. 'long' starts 1.5 bars into the loop
-    // and runs well past the loop end; 'outside' lies before the loop and must never sound.
-    const notes = [note('first', 69, BAR, 480), note('long', 69, BAR + BAR * 1.5, BAR * 3), note('outside', 69, 0, 480)];
+    // Loop bars 1–2 (4 s per pass at 120 BPM), played from its start. 'first' is one beat into the loop;
+    // 'long' starts 1.5 bars in and runs well past the loop end; 'outside' lies before the loop.
+    const notes = [note('first', 108, BAR + PPQ, 480), note('long', 108, BAR + BAR * 1.5, BAR * 3), note('outside', 108, 0, 480)];
     const p = projectWith(notes, { loop: { enabled: true, startBar: 1, endBar: 3 } });
     const s = await session(p, { seconds: 16 });
     s.seq.start(BAR, false);
     const out = await s.render(15);
     const passStart = (n: number) => t(BAR * 2 * n);
     for (let pass = 0; pass < 3; pass++) {
-      const from = passStart(pass) - 0.02;
-      const found = onsets(win(out, from, from + 3.9), 0.02).map((x) => x + from);
+      const from = passStart(pass) + 0.2;
+      const found = onsets(win(out, from, from + 3.7), 0.02).map((x) => x + from);
       expect(found, `pass ${pass}`).toHaveLength(2);
-      expect(Math.abs(found[0]! - passStart(pass)), `pass ${pass} first`).toBeLessThan(0.001);
+      expect(Math.abs(found[0]! - t(BAR * 2 * pass + PPQ)), `pass ${pass} first`).toBeLessThan(0.001);
       expect(Math.abs(found[1]! - t(BAR * 2 * pass + BAR * 1.5)), `pass ${pass} long`).toBeLessThan(0.001);
-      // The long note is cut at the loop end: after the next pass's short note, silence until it starts again.
-      expect(rms(win(out, passStart(pass + 1) + 0.3, passStart(pass + 1) + 2.95)), `pass ${pass} cut`).toBeLessThan(1e-4);
+      // The long note is cut at the loop end: silence from just after it until the next pass's first note.
+      expect(rms(win(out, passStart(pass + 1) + 0.05, passStart(pass + 1) + 0.45)), `pass ${pass} cut`).toBeLessThan(1e-4);
     }
+    // Nothing before the first pass's loop start: 'outside' never plays.
+    expect(rms(win(out, 0, START_LEAD_S + 0.45))).toBeLessThan(1e-4);
     // Same level every pass: a double trigger would add up.
     const level = (pass: number) => rms(win(out, t(BAR * 2 * pass + BAR * 1.5) + 0.2, t(BAR * 2 * pass + BAR * 1.5) + 0.9));
     expect(level(1) / level(0)).toBeCloseTo(1, 1);
@@ -141,7 +143,7 @@ describe('Sequencer through an OfflineAudioContext', () => {
     s.seq.start(0, false);
     const add = () => {
       const track = s.store.getState().project.tracks[0]!;
-      s.store.getState().loadProject({ ...s.store.getState().project, tracks: [{ ...track, notes: [...track.notes, note('added', 72, Math.round((3 - START_LEAD_S) / secondsPerTick(120)), 480)] }] });
+      s.store.getState().loadProject({ ...s.store.getState().project, tracks: [{ ...track, notes: [...track.notes, note('added', 108, Math.round((3 - START_LEAD_S) / secondsPerTick(120)), 480)] }] });
     };
     const remove = () => {
       const track = s.store.getState().project.tracks[0]!;
@@ -164,7 +166,7 @@ describe('Sequencer through an OfflineAudioContext', () => {
   }, 60_000);
 
   it('changing the tempo while playing changes the spacing of the notes not yet scheduled', async () => {
-    const notes = Array.from({ length: 24 }, (_, i) => note(`n${i}`, 69, i * PPQ, 120));
+    const notes = Array.from({ length: 24 }, (_, i) => note(`n${i}`, 108, i * PPQ, 120));
     const s = await session(projectWith(notes), { seconds: 12 });
     s.seq.start(0, false);
     const out = await s.render(11, { 2: () => s.store.getState().setTempo(240) });
@@ -184,7 +186,7 @@ describe('Sequencer through an OfflineAudioContext', () => {
   }, 60_000);
 
   it('metronome: accented downbeat louder than the other beats, clicks on the beat, one-bar count-in first', async () => {
-    const s = await session(projectWith([note('n', 69, 0, 240)], { lengthBars: 2 }), { metronome: true, seconds: 8 });
+    const s = await session(projectWith([note('n', 108, 0, 240)], { lengthBars: 2 }), { metronome: true, seconds: 8 });
     s.seq.start(0, true);
     const out = await s.render(7);
     // Count-in bar (4 clicks, 2 s), then 2 bars of song with clicks each beat, and the note on the first beat.

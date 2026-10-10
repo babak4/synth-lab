@@ -76,6 +76,18 @@ Create **one** `ReverbHub` per project, with the master input as its destination
 same but brings back the per-track CPU cost. The `TrackMixer` drives `engine.setTrackGain()`; the
 engine applies it *before* the reverb send.
 
+## Sequencer timing (T5.2)
+
+`SequencerPlan` (pure, `src/core/sequencer-plan.ts`) computes every event from integer ticks and an exact
+anchor, so 30 simulated minutes of looping show no drift (tests assert < 1 ns). `Sequencer`
+(`src/audio/sequencer.ts`) ticks every 25 ms from a Worker and schedules 100 ms ahead. The offline test
+renders 16 bars of 1/16 notes at 120 BPM and measures every onset within 1 ms of its target.
+
+Chromium quirk found on the way: `start(when)` on a `ConstantSourceNode`, or on an `OscillatorNode`
+whose frequency is driven by a node, is only honoured to the nearest 128-frame render quantum (notes
+came out up to 2.7 ms late), while `AudioParam` automation is sample-accurate. Voices now start those
+sources immediately and let the automation place the note (`voice.ts` `startSources`, `osc-slot.ts`).
+
 ## Still open (T6.2)
 
 - Measure on an M1 MacBook Air; record latency (key → sound), UI frame time while playing, and memory

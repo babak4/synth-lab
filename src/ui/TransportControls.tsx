@@ -1,9 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { useServices } from '@/app/context';
 import { formatBarBeat } from '@/core/transport';
 import { isTypingTarget } from './keyboard/keyboard-player';
-import { subscribeFrames } from './visualisers/raf-loop';
 import './transport.css';
 
 const Icon = ({ children }: { children: ReactNode }) => (
@@ -13,15 +12,15 @@ const Icon = ({ children }: { children: ReactNode }) => (
 );
 
 /** Space (play/stop) and Home (return to start), unless the focused control uses those keys itself. */
-function useTransportShortcuts(toggle: () => void, home: () => void): void {
+function useTransportShortcuts(toggle: () => unknown, home: () => unknown): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       const el = e.target instanceof Element ? e.target : null;
-      if (e.code === 'Space' && !el?.closest('button, a[href], select, [role=button], [role=slider], [role=tab], [role=switch], [role=checkbox], [role=radio], summary')) {
+      if (e.code === 'Space' && !el?.closest('button, a[href], select, input, textarea, [role=button], [role=slider], [role=tab], [role=switch], [role=checkbox], [role=radio], summary')) {
         e.preventDefault();
         toggle();
-      } else if (e.code === 'Home' && !el?.closest('[role=slider], [role=tab], [role=listbox], [role=spinbutton], select')) {
+      } else if (e.code === 'Home' && !el?.closest('[role=slider], [role=tab], [role=listbox], [role=spinbutton], select, input, textarea')) {
         e.preventDefault();
         home();
       }
@@ -31,7 +30,7 @@ function useTransportShortcuts(toggle: () => void, home: () => void): void {
   }, [toggle, home]);
 }
 
-/** Bar.beat readout; written straight into the DOM from the shared frame loop, so it never re-renders. */
+/** Bar.beat readout; written straight into the DOM ~10 times a second (a beat is far slower), so it never re-renders. */
 function PositionReadout() {
   const { transportStore, projectStore } = useServices();
   const ref = useRef<HTMLOutputElement>(null);
@@ -43,10 +42,10 @@ function PositionReadout() {
       if (el.textContent !== text) el.textContent = text;
     };
     paint();
-    const off = subscribeFrames(paint);
+    const timer = setInterval(paint, 100);
     const offStore = transportStore.subscribe(paint);
     return () => {
-      off();
+      clearInterval(timer);
       offStore();
     };
   }, [transportStore, projectStore]);
@@ -62,22 +61,14 @@ export function TransportControls() {
   const running = phase !== 'stopped';
 
   // Play needs the audio clock running; a click or key press is the user gesture that may start it.
-  const toggle = async () => {
+  const toggle = useCallback(async () => {
     const t = transportStore.getState();
     if (t.isRunning()) return t.stop();
     if (appStore.getState().audio !== 'on') await startAudio();
     transportStore.getState().play();
-  };
-  const home = () => transportStore.getState().returnToStart();
-  // The shortcut hook keeps one listener; route through refs so it always sees the latest closures.
-  const toggleRef = useRef(toggle);
-  const homeRef = useRef(home);
-  toggleRef.current = toggle;
-  homeRef.current = home;
-  useTransportShortcuts(
-    () => void toggleRef.current(),
-    () => homeRef.current(),
-  );
+  }, [transportStore, appStore, startAudio]);
+  const home = useCallback(() => transportStore.getState().returnToStart(), [transportStore]);
+  useTransportShortcuts(toggle, home);
 
   return (
     <div className="transport" role="group" aria-label="Transport" data-help-for="composition" data-state={phase}>
