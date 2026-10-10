@@ -6,6 +6,7 @@ import { INDEX_ID } from '@/state/help-store';
 import { PresetMenu } from './PresetMenu';
 import { UndoRedo } from './history/UndoRedo';
 import { TransportControls } from './TransportControls';
+import { ProjectMenu } from './ProjectMenu';
 
 function MasterVolume() {
   const volume = useApp((s) => s.masterVolumeDb);
@@ -80,6 +81,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <h1 className="brand">Synth Lab</h1>
+      <ProjectMenu />
       <PresetMenu />
       <UndoRedo />
       <MasterVolume />

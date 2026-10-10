@@ -1,0 +1,32 @@
+/* Composition tab (plan T5.6). The tab body scrolls; nothing here sets its own page-level height. */
+.composition { display: grid; gap: 12px; min-width: 0; }
+.track-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px 12px; min-width: 0; }
+.track-list-head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.track-list-head h2 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.track-count { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.track-add-reason { color: var(--text-muted); font-size: 12px; }
+.track-add, .track-btn { font: inherit; padding: 4px 10px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.track-btn { padding: 2px 8px; min-width: 28px; font-weight: 600; }
+.track-btn[aria-pressed='true'] { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.track-add:disabled, .track-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.track-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; outline: none; }
+.track-row { display: grid; grid-template-columns: minmax(420px, 1fr) minmax(160px, 1fr); gap: 8px 12px; align-items: stretch; padding: 6px 8px; border: 1px solid var(--border); border-left: 6px solid var(--track); border-radius: 6px; background: var(--surface); }
+.track-row.selected { background: var(--accent-soft); outline: 2px solid var(--accent); outline-offset: -1px; }
+.track-head { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; min-width: 0; }
+.track-select { display: inline-flex; padding: 4px; background: none; border: 2px solid transparent; border-radius: 6px; cursor: pointer; }
+.track-select[aria-pressed='true'] { border-color: var(--accent); }
+.swatch { width: 16px; height: 16px; border-radius: 50%; background: var(--track); border: 1px solid var(--text); display: block; }
+.track-name { font: inherit; width: 9em; min-width: 0; padding: 3px 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+.track-fader { display: flex; flex-direction: row; align-items: center; gap: 4px; }
+.track-fader input[type='range'] { width: 110px; accent-color: var(--accent); }
+.track-tools { display: inline-flex; gap: 4px; margin-left: auto; }
+
+.track-overview { display: block; padding: 0; min-height: 40px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; overflow: hidden; }
+.track-overview[aria-pressed='true'] { border-color: var(--accent); }
+.track-overview svg { display: block; width: 100%; height: 100%; min-height: 40px; }
+.track-overview .bar-line { stroke: var(--border); stroke-width: 1; opacity: 0.45; }
+.track-overview .mini-note { fill: var(--track); stroke: var(--text); stroke-width: 0.5; vector-effect: non-scaling-stroke; }
+
+@container main (max-width: 760px) { .track-row { grid-template-columns: minmax(0, 1fr); } }
+.piano-roll-slot { padding: 12px; border: 1px dashed var(--border); border-radius: var(--radius); }

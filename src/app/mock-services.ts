@@ -13,6 +13,8 @@ import { createTransportStore } from '@/state/transport-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createMemoryStorage } from '@/state/storage';
+import { createProjectFileStore } from '@/state/project-file-store';
+import { createProjectPersistence } from '@/state/persistence';
 import type { AppServices } from './context';
 
 export function createMockServices(): AppServices & { engine: MockEngine; host: MockAudioHost } {
@@ -20,9 +22,12 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
   const host = new MockAudioHost();
   const patchStore = createPatchStore();
   const projectStore = createProjectStore();
+  const projectFileStore = createProjectFileStore({ projectStore });
+  const storage = createMemoryStorage();
+  const persistence = createProjectPersistence({ projectStore, storage }); // not started: tests opt in
   const appStore = createAppStore();
   const bus = new EventBus<EventMap>(); // a private bus per test: no cross-test leakage
-  const presetStore = createPresetStore({ patchStore, storage: createMemoryStorage() });
+  const presetStore = createPresetStore({ patchStore, storage });
   void presetStore.getState().init();
   // Bound before the history store exists so loading the first track's patch is not an undo step.
   bindPatchToProject(patchStore, projectStore, () => historyStore.history.clear());
@@ -45,5 +50,5 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
     await host.start();
     appStore.getState().setAudio('on');
   };
-  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, tryThisStore, startAudio };
+  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, startAudio };
 }

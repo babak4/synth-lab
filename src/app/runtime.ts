@@ -22,6 +22,8 @@ import { TrackEngines } from './track-engines';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createIdbStorage } from '@/state/storage';
+import { createProjectFileStore } from '@/state/project-file-store';
+import { createProjectPersistence } from '@/state/persistence';
 import { takeFrameStats } from '@/ui/visualisers/raf-loop';
 import type { AppServices } from './context';
 
@@ -37,8 +39,15 @@ async function build(): Promise<AppServices> {
   const host = new WebAudioHost();
   const patchStore = createPatchStore();
   const projectStore = createProjectStore();
+  const storage = createIdbStorage();
+  // Project files (New / Open / Save as file) are judged against the project as it was at startup.
+  const projectFileStore = createProjectFileStore({ projectStore });
+  const persistence = createProjectPersistence({ projectStore, storage });
+  // Bring back the autosaved project before the tracks are read: the track engines are built from it.
+  await persistence.restore();
+  persistence.start(window);
   const appStore = createAppStore();
-  const presetStore = createPresetStore({ patchStore, storage: createIdbStorage() });
+  const presetStore = createPresetStore({ patchStore, storage });
   void presetStore.getState().init();
 
   // The context is created suspended; nothing is audible until startAudio() runs from a gesture.
@@ -84,7 +93,7 @@ async function build(): Promise<AppServices> {
     appStore.getState().setAudio('on');
   };
 
-  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, tryThisStore, startAudio };
+  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, startAudio };
   // Test hook (like the old synth-html `window.__daw`): e2e tests assert on state, not pixels.
   (window as unknown as { __synth: unknown }).__synth = { ...services, trackEngines, mixer, sequencer, vizStats: takeFrameStats };
   return services;
