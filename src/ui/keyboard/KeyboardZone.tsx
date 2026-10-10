@@ -31,7 +31,7 @@ export function KeyboardZone() {
   const octave = useApp((s) => s.kbdOctave);
   const velocity = useApp((s) => s.kbdVelocity);
   return (
-    <Zone title="Keyboard" id="keyboard">
+    <Zone title="Keyboard" id="keyboard" compact>
       <div className="kb-controls">
         <LiveIndicator />
         <NoteReadout />

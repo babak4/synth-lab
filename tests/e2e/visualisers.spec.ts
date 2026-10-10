@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 // Real-time audio analysis in the browser: Chromium only (Firefox/WebKit headless audio is not reliable for this).
 test.skip(({ browserName }) => browserName !== 'chromium', 'visualiser checks need a running audio clock');
@@ -88,16 +89,21 @@ test('the meter moves with the signal and the visualisers stay inside the 4 ms f
   await expect(page.getByRole('button', { name: 'Clip indicator' })).toHaveAttribute('data-clipped', 'false');
 });
 
-test('every canvas shares one frame loop: exactly one subscription each', async ({ page }) => {
+test('every canvas shares one frame loop: exactly one subscription each, and hidden tabs draw nothing', async ({ page }) => {
   await startWithNote(page);
-  const { subscribers, canvases } = await page.evaluate(async () => {
-    const path = '/src/ui/visualisers/raf-loop.ts';
-    const mod = await import(/* @vite-ignore */ path);
-    return {
-      subscribers: (mod as { frameSubscriberCount(): number }).frameSubscriberCount(),
-      canvases: document.querySelectorAll('canvas[data-viz]').length,
-    };
-  });
-  expect(canvases).toBeGreaterThanOrEqual(7); // scope, spectrum, meter, filter plot, 2 envelope plots, LFO plot
-  expect(subscribers).toBe(canvases);
+  // The pinned output strip (scope, spectrum, meter) is always there; each tab adds its own plots.
+  const minimum = { Sound: 3, Shape: 6, Modulation: 4, Effects: 3, Composition: 3 } as const;
+  for (const [tab, min] of Object.entries(minimum) as [keyof typeof minimum, number][]) {
+    await showTab(page, tab);
+    const { subscribers, canvases } = await page.evaluate(async () => {
+      const path = '/src/ui/visualisers/raf-loop.ts';
+      const mod = await import(/* @vite-ignore */ path);
+      return {
+        subscribers: (mod as { frameSubscriberCount(): number }).frameSubscriberCount(),
+        canvases: document.querySelectorAll('canvas[data-viz]').length,
+      };
+    });
+    expect(canvases, tab).toBeGreaterThanOrEqual(min);
+    expect(subscribers, tab).toBe(canvases);
+  }
 });

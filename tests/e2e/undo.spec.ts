@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 type Synth = { patchStore: { getState(): { patch: { name: string; params: Record<string, number | string | boolean> } } } };
 const param = (page: Page, id: string) =>
@@ -8,6 +9,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.waitForSelector('[data-testid=synth-panel]');
+  await showTab(page, 'Shape');
 });
 
 test('a whole knob drag is one undo step, and redo brings it back', async ({ page }) => {

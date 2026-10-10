@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
+import { showTab } from './tabs';
 
 const drawer = (page: Page) => page.getByTestId('help-drawer');
 const title = (page: Page) => page.getByTestId('help-title');
@@ -11,14 +12,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('opens help from five different controls and highlights what each describes', async ({ page }) => {
-  const cases: [string, string, string][] = [
-    ['Help: Cutoff', 'Filter cutoff', 'filter-cutoff'],
-    ['Help: Resonance', 'Filter resonance', 'filter-resonance'],
-    ['Help: Amp attack', 'Amp envelope attack', 'amp-env-attack'],
-    ['Help: Rate', 'LFO rate', 'lfo-rate'],
-    ['Help: Reverb on', 'Reverb on', 'reverb-on'],
+  const cases: [string, string, string, 'Shape' | 'Modulation' | 'Effects'][] = [
+    ['Help: Cutoff', 'Filter cutoff', 'filter-cutoff', 'Shape'],
+    ['Help: Resonance', 'Filter resonance', 'filter-resonance', 'Shape'],
+    ['Help: Amp attack', 'Amp envelope attack', 'amp-env-attack', 'Shape'],
+    ['Help: Rate', 'LFO rate', 'lfo-rate', 'Modulation'],
+    ['Help: Reverb on', 'Reverb on', 'reverb-on', 'Effects'],
   ];
-  for (const [button, heading, id] of cases) {
+  for (const [button, heading, id, tab] of cases) {
+    await showTab(page, tab);
     await page.getByRole('button', { name: button, exact: true }).click({ force: true });
     await expect(title(page)).toHaveText(heading);
     await expect(page.locator(`[data-help-for="${id}"].help-highlight`).first()).toBeVisible();
@@ -29,6 +31,7 @@ test('opens help from five different controls and highlights what each describes
 });
 
 test('the drawer sits beside the synth, never over it: controls stay visible and usable', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('button', { name: 'Help: Filter', exact: true }).click();
   await expect(drawer(page)).toBeVisible();
   const d = (await drawer(page).boundingBox())!;
@@ -44,6 +47,7 @@ test('the drawer sits beside the synth, never over it: controls stay visible and
 });
 
 test('section entries follow the template and the filter section highlights the whole section', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('button', { name: 'Help: Filter', exact: true }).click();
   await expect(title(page)).toHaveText('Filter');
   for (const h of ['What it is', "What you'll hear", 'Try this', 'The controls', 'Beyond this synth', "Where you've heard it", 'Related']) {
@@ -53,6 +57,7 @@ test('section entries follow the template and the filter section highlights the 
 });
 
 test('back and forward move through the entries visited; links navigate', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('button', { name: 'Help: Filter', exact: true }).click();
   await drawer(page).getByRole('button', { name: 'Cutoff', exact: true }).first().click();
   await expect(title(page)).toHaveText('Filter cutoff');
@@ -90,6 +95,7 @@ test('glossary terms are underlined and reveal a one-line definition on hover an
 });
 
 test('"?" opens help for the focused control, "?" with nothing focused opens the index, Esc closes', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('slider', { name: 'Resonance' }).focus();
   await page.keyboard.press('Shift+Slash');
   await expect(title(page)).toHaveText('Filter resonance');
@@ -114,6 +120,7 @@ test('the index lists every section and control in signal-flow order', async ({ 
 });
 
 test('Try this: Set it up changes the sound, A/B switches, Undo restores', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('button', { name: 'Help: Filter', exact: true }).click();
   const patchValue = () => page.evaluate(() => (window as unknown as { __synth: { patchStore: { getState(): { patch: { params: Record<string, number> } } } } }).__synth.patchStore.getState().patch.params['filter-cutoff']);
   const card = drawer(page).getByRole('article', { name: 'Experiment: Close the filter' });
@@ -128,6 +135,7 @@ test('Try this: Set it up changes the sound, A/B switches, Undo restores', async
 });
 
 test('accessibility: no serious or critical axe violations with the drawer open', async ({ page }) => {
+  await showTab(page, 'Shape');
   await page.getByRole('button', { name: 'Help: Filter', exact: true }).click();
   await expect(title(page)).toHaveText('Filter');
   const results = await new AxeBuilder({ page }).analyze();
@@ -168,7 +176,8 @@ test.describe('animated diagrams (T4.5)', () => {
   });
 
   test('every diagram named in the content renders', async ({ page }) => {
-    for (const [button, count] of [['Help: Oscillators', 3], ['Help: Filter', 1], ['Help: Amp envelope', 1], ['Help: LFO', 1]] as const) {
+    for (const [button, count, tab] of [['Help: Oscillators', 3, 'Sound'], ['Help: Filter', 1, 'Shape'], ['Help: Amp envelope', 1, 'Shape'], ['Help: LFO', 1, 'Modulation']] as const) {
+      await showTab(page, tab);
       await page.getByRole('button', { name: button, exact: true }).click();
       await expect(drawer(page).locator('figure.diagram')).toHaveCount(count);
     }

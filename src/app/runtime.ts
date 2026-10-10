@@ -11,6 +11,7 @@ import { createAppStore } from '@/state/app-store';
 import { bindEngineToPatch, createPatchStore } from '@/state/patch-store';
 import { createHelpStore } from '@/state/help-store';
 import { createHistoryStore } from '@/state/history-store';
+import { createTabStore } from '@/state/tab-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
 import { createIdbStorage } from '@/state/storage';
@@ -48,6 +49,7 @@ async function build(): Promise<AppServices> {
 
   const helpStore = createHelpStore();
   const historyStore = createHistoryStore(patchStore);
+  const tabStore = createTabStore();
   const tryThisStore = createTryThisStore({ patchStore, bus, now: () => host.currentTime });
   const startAudio = async () => {
     if (appStore.getState().audio === 'on') return;
@@ -56,7 +58,7 @@ async function build(): Promise<AppServices> {
     appStore.getState().setAudio('on');
   };
 
-  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tryThisStore, startAudio };
+  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, tryThisStore, startAudio };
   // Test hook (like the old synth-html `window.__daw`): e2e tests assert on state, not pixels.
   (window as unknown as { __synth: unknown }).__synth = { ...services, vizStats: takeFrameStats };
   return services;
