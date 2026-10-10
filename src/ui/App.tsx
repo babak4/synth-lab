@@ -10,11 +10,13 @@ import { KitDemo } from './KitDemo';
 import { SynthPanel } from './synth/SynthPanel';
 import { KeyboardZone } from './keyboard/KeyboardZone';
 import { useKeyboardPlayer } from './keyboard/useKeyboardPlayer';
+import { useUndoShortcuts } from './history/useUndoShortcuts';
 import { TopBar } from './TopBar';
 import { Zone } from './Zones';
 
 export function App() {
   useKeyboardPlayer();
+  useUndoShortcuts();
   if (location.hash === '#kit') return <KitDemo />;
   return (
     <HelpProvider>
