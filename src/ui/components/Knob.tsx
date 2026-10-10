@@ -3,7 +3,17 @@ import { getParamDef } from '@/core/params/registry';
 import { formatValue, valueToNorm } from '@/core/params/scale';
 import type { ContinuousParamDef } from '@/core/params/types';
 import { HelpButton } from './HelpButton';
-import { KNOB_START_DEG, KNOB_SWEEP_DEG, arcPath, dragValue, keyValue, knobAngle, polar, wheelValue } from './control-logic';
+import { NumericReadout, type NumericReadoutHandle } from './NumericReadout';
+import {
+  KNOB_START_DEG,
+  KNOB_SWEEP_DEG,
+  arcPath,
+  dragValue,
+  keyValue,
+  knobAngle,
+  polar,
+  wheelValue,
+} from './control-logic';
 import type { ContinuousId } from './types';
 
 interface Props {
@@ -25,6 +35,7 @@ export function Knob({ id, value, onChange, noHelp, disabled }: Props) {
   const norm = valueToNorm(def, value);
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; value: number } | null>(null);
+  const readout = useRef<NumericReadoutHandle>(null);
   // Wheel must be a non-passive native listener so we can stop the page scrolling.
   useEffect(() => {
     const el = ref.current;
@@ -53,6 +64,11 @@ export function Knob({ id, value, onChange, noHelp, disabled }: Props) {
   };
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      readout.current?.edit(); // type an exact value
+      return;
+    }
     const next = keyValue(def, value, e.key, e.shiftKey);
     if (next === null) return;
     e.preventDefault();
@@ -65,7 +81,11 @@ export function Knob({ id, value, onChange, noHelp, disabled }: Props) {
   const text = formatValue(def, value);
 
   return (
-    <div className={`control knob${disabled ? ' is-disabled' : ''}`} data-help-for={def.helpId} data-param={id}>
+    <div
+      className={`control knob${disabled ? ' is-disabled' : ''}`}
+      data-help-for={def.helpId}
+      data-param={id}
+    >
       <div className="control-label">
         <span id={`${id}-label`}>{def.shortLabel ?? def.label}</span>
         {!noHelp && <HelpButton helpId={def.helpId} label={def.label} />}
@@ -90,15 +110,16 @@ export function Knob({ id, value, onChange, noHelp, disabled }: Props) {
         onDoubleClick={() => !disabled && onChange(def.default)}
       >
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
-          <path d={arcPath(C, C, R, KNOB_START_DEG, KNOB_START_DEG + KNOB_SWEEP_DEG)} className="knob-track" />
+          <path
+            d={arcPath(C, C, R, KNOB_START_DEG, KNOB_START_DEG + KNOB_SWEEP_DEG)}
+            className="knob-track"
+          />
           {norm > 0.001 && <path d={arcPath(C, C, R, KNOB_START_DEG, angle)} className="knob-value" />}
           <circle cx={C} cy={C} r={R - 5} className="knob-cap" />
           <line x1={inner.x} y1={inner.y} x2={tip.x} y2={tip.y} className="knob-pointer" />
         </svg>
       </div>
-      <output className="control-value" aria-hidden="true">
-        {text}
-      </output>
+      <NumericReadout ref={readout} def={def} value={value} onChange={onChange} disabled={disabled} />
     </div>
   );
 }

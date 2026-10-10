@@ -2,6 +2,8 @@ import { getParamDef } from '@/core/params/registry';
 import { formatValue } from '@/core/params/scale';
 import type { ContinuousParamDef } from '@/core/params/types';
 import { HelpButton } from './HelpButton';
+import { useRef } from 'react';
+import { NumericReadout, type NumericReadoutHandle } from './NumericReadout';
 import { sliderAttrs, sliderPosition, sliderValue } from './control-logic';
 import type { ContinuousId } from './types';
 
@@ -18,6 +20,7 @@ interface Props {
 export function Slider({ id, value, onChange, orientation = 'horizontal', noHelp, disabled }: Props) {
   const def = getParamDef(id) as ContinuousParamDef;
   const { max, step } = sliderAttrs(def);
+  const readout = useRef<NumericReadoutHandle>(null);
   const text = formatValue(def, value);
   return (
     <div className={`control slider ${orientation}`} data-help-for={def.helpId} data-param={id}>
@@ -38,10 +41,14 @@ export function Slider({ id, value, onChange, orientation = 'horizontal', noHelp
         disabled={disabled}
         onChange={(e) => onChange(sliderValue(def, Number(e.target.value)))}
         onDoubleClick={() => onChange(def.default)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !disabled) {
+            e.preventDefault();
+            readout.current?.edit();
+          }
+        }}
       />
-      <output className="control-value" aria-hidden="true">
-        {text}
-      </output>
+      <NumericReadout ref={readout} def={def} value={value} onChange={onChange} disabled={disabled} />
     </div>
   );
 }

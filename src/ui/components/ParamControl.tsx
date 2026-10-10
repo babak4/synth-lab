@@ -20,9 +20,23 @@ export function ParamControl<I extends ParamId>({ id, value, onChange, variant, 
   const def = getParamDef(id);
   switch (def.type) {
     case 'continuous':
-      return <Knob id={id as ContinuousId} value={value as number} onChange={onChange as (v: number) => void} disabled={disabled} />;
+      return (
+        <Knob
+          id={id as ContinuousId}
+          value={value as number}
+          onChange={onChange as (v: number) => void}
+          disabled={disabled}
+        />
+      );
     case 'bool':
-      return <Toggle id={id as BoolId} value={value as boolean} onChange={onChange as (v: boolean) => void} disabled={disabled} />;
+      return (
+        <Toggle
+          id={id as BoolId}
+          value={value as boolean}
+          onChange={onChange as (v: boolean) => void}
+          disabled={disabled}
+        />
+      );
     case 'enum': {
       const props = { id: id as EnumId, value: value as string, onChange: onChange as (v: string) => void };
       return (variant ?? (def.options.length <= (icons ? 6 : 5) ? 'segmented' : 'select')) === 'segmented' ? (

@@ -22,7 +22,13 @@ export function Section({ title, helpId, children, more, className }: Props) {
       <div className="section-body">{children}</div>
       {more && (
         <>
-          <button type="button" className="more-btn" aria-expanded={open} aria-controls={moreId} onClick={() => setOpen(!open)}>
+          <button
+            type="button"
+            className="more-btn"
+            aria-expanded={open}
+            aria-controls={moreId}
+            onClick={() => setOpen(!open)}
+          >
             {open ? 'Less' : 'More'}
           </button>
           <div id={moreId} className="section-body section-more" hidden={!open}>

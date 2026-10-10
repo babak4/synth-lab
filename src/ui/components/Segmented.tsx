@@ -42,7 +42,13 @@ export function Segmented({ id, value, onChange, icons, noHelp, disabled }: Prop
         <span id={`${id}-label`}>{def.shortLabel ?? def.label}</span>
         {!noHelp && <HelpButton helpId={def.helpId} label={def.label} />}
       </div>
-      <div ref={group} role="radiogroup" aria-label={def.label} className="segmented-group" onKeyDown={onKeyDown}>
+      <div
+        ref={group}
+        role="radiogroup"
+        aria-label={def.label}
+        className="segmented-group"
+        onKeyDown={onKeyDown}
+      >
         {def.options.map((o) => (
           <button
             key={o.value}

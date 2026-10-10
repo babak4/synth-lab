@@ -19,7 +19,13 @@ export function Select({ id, value, onChange, noHelp, disabled }: Props) {
         <label htmlFor={`${id}-select`}>{def.shortLabel ?? def.label}</label>
         {!noHelp && <HelpButton helpId={def.helpId} label={def.label} />}
       </div>
-      <select id={`${id}-select`} aria-label={def.label} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
+      <select
+        id={`${id}-select`}
+        aria-label={def.label}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+      >
         {def.options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
