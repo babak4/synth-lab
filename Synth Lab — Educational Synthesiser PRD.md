@@ -57,7 +57,7 @@ Tab groups (v1 proposal; the grouping is a single list in the code and can chang
 
 ### Principles
 
-- **Signal-flow layout.** Sections sit in the order sound travels through them, with thin connector lines between them, so the layout itself teaches the architecture.
+- **Signal-flow layout.** Tabs are ordered the way sound travels (sound, shape, modulation, effects, output), and within each tab the sections sit in signal-flow order with thin connector lines between them, so the layout itself teaches the architecture.
 - **Simple by default.** Each section shows its essential controls. Advanced controls (where v1 has any) sit behind a "more" toggle.
 - **Everything is explainable.** Every section title and every control has a (?) button. No control ships without help content.
 - **See what you hear.** Each section that shapes sound shows a small live plot of its effect.

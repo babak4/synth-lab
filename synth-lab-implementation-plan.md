@@ -12,9 +12,12 @@ This plan breaks the PRD into tasks that one or more coding agents can execute. 
 
 | Role | Responsibility | Suggested model |
 | --- | --- | --- |
-| **Orchestrator** | Owns this plan, the shared contracts (T0.2), task assignment, merging and integration. Reviews every PR touching `src/core/`. | Claude Opus 5.5, high effort |
+| **Orchestrator** | Owns this plan, the shared contracts (T0.2), task assignment, merging and integration. Reviews every PR touching `src/core/`. | Claude Sonnet 5.5, high effort |
 | **Implementer agents** | Execute one task each on its own branch/worktree. | Per task (see tables) |
-| **Reviewer agent** | Fresh-context review of high-risk tasks (marked ★) before merge. Never the same agent that wrote the code. | Claude Opus 5.5, high effort |
+| **Reviewer agent** | Fresh-context review of high-risk tasks (marked ★) before merge. Never the same agent that wrote the code. | Claude Sonnet 5.5, high effort |
+| **Human** | Listening checks, the help-content expert review (T4.6), measurements on target hardware (T6.2), final visual sign-off (T7.3). | — |
+
+**Model policy:** only Claude Sonnet 5.5 and Claude Haiku 5.5 are used, for implementation and for every agent role. Claude Opus is not used anywhere in this plan.
 
 ### 1.2 Rules for every agent
 
@@ -38,11 +41,12 @@ This plan breaks the PRD into tasks that one or more coding agents can execute. 
 
 | Model | Use it for |
 | --- | --- |
-| **Claude Opus 5.5** | Architecture, contracts, DSP, audio timing, the piano-roll editor, accuracy-critical teaching content, and all reviews. |
-| **Claude Sonnet 5.5** | Most feature work: UI sections, visualisers, input handling, state, persistence, tests. |
-| **Claude Haiku 5.5** | Scaffolding, config, mechanical content checks, simple components, fixture data. |
+| **Claude Sonnet 5.5** | All implementation with design decisions or a high correctness bar: DSP, audio timing, the sequencer, the piano-roll editor, layout and focus behaviour, teaching content, state, and all reviews. |
+| **Claude Haiku 5.5** | Mechanical or pattern-following work: scaffolding, config, storage wiring, simple components once a pattern exists, fixture data, small follow-ups. |
 
-Effort: **low** for mechanical tasks, **medium** for typical feature work, **high** where the task involves real-time audio, concurrency/timing, numerical correctness or non-obvious interaction design. When unsure, go one level up for tasks marked ★.
+Effort: **low** for mechanical tasks, **medium** for typical feature work, **high** where the task involves real-time audio, concurrency/timing, numerical correctness or non-obvious interaction design.
+
+Work that this plan once gave to a larger model now goes to Sonnet 5.5 at **high** effort, and every such task is marked ★ so it gets a fresh-context Sonnet review before merge. If a Haiku task turns out to need real design decisions, move it to Sonnet rather than raising Haiku's effort.
 
 ---
 
@@ -128,6 +132,8 @@ Phase 6  T6.1–T6.4 after phases 2–5
 
 ### Parallel lanes once T0.2 is merged
 
+(Historical: these lanes built phases 0–4. For the remaining work, use the waves in section 4a.)
+
 | Lane | Tasks | Notes |
 | --- | --- | --- |
 | A — Audio engine | T1.1 → T1.2 → T1.3/T1.4/T1.5/T1.6 → T1.7 → T1.8 | Critical path; start first |
@@ -138,16 +144,40 @@ Phase 6  T6.1–T6.4 after phases 2–5
 
 ---
 
-## 4a. Remaining work — priority order
+## 4a. Remaining work — priorities, models and parallel waves
 
-Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are defined there).
+**Done:** phases 0–4 (T0.1 to T4.5), all implemented with Claude Sonnet 5.5. T4.6 has an author self-review only (`docs/content-review.md`).
 
-1. **T2.6 Editable numeric readouts** (priority: do this before anything else)
-2. **T2.7 Fixed-viewport tabbed layout** (priority: keyboard always visible; tabs instead of scrolling)
-3. Phase 5 — composition tool (T5.1 to T5.7)
-4. T4.6 — independent accuracy review and human sign-off of the help content (not an agent task; see `docs/content-review.md`)
-5. Phase 6 — quality and release (T6.1 to T6.4)
-6. Phase 7 — visual themes (T7.1 to T7.3; deferred until after release)
+**How to read this:** if one agent is working, follow the priority numbers. With several agents, run each wave's tasks in parallel, each on its own branch or worktree (rule 1.2.3), and merge in priority order.
+
+| Priority | Wave | Task | Model | Effort | Depends on | Runs in parallel with |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | T2.6 ★ Editable numeric readouts | Sonnet 5.5 | medium | done tasks only | T2.7, T5.1, T5.4 |
+| 2 | 1 | T2.7 ★ Fixed-viewport tabbed layout | Sonnet 5.5 | high | done tasks only; merge after T2.6 | T2.6, T5.1, T5.4 |
+| 3 | 1 | T5.1 Project state and multi-track audio | Sonnet 5.5 | high | done tasks only | T2.6, T2.7, T5.4 |
+| 4 | 1 | T5.4 Undo/redo (command stack) | Sonnet 5.5 | medium | done tasks only | T2.6, T2.7, T5.1 |
+| 5 | 2 | T5.2 ★ Sequencer scheduler and transport | Sonnet 5.5 | high | T5.1 | T5.3a, T5.6, T5.7 |
+| 6 | 2 | T5.3a Piano roll rendering | Sonnet 5.5 | high | T2.7 (Composition tab) | T5.2, T5.6, T5.7 |
+| 7 | 2 | T5.6 Track list and arrangement overview | Sonnet 5.5 | medium | T5.1, T2.7 | T5.2, T5.3a, T5.7 |
+| 8 | 2 | T5.7 Persistence | Haiku 5.5 | medium | T5.1 | T5.2, T5.3a, T5.6 |
+| 9 | 3 | T5.3b ★ Piano roll editing | Sonnet 5.5 | high | T5.3a, T5.4 | T5.5 |
+| 10 | 3 | T5.5 Recording from the keyboard | Sonnet 5.5 | high | T5.2 | T5.3b |
+| 11 | 4 | T5.3c Velocity lane | Haiku 5.5 | medium | T5.3b | T4.7 |
+| 12 | 4 | T4.7 Help content update for the new layout and the composition tool | Sonnet 5.5 | medium | T2.6, T2.7, T5.3b, T5.5 | T5.3c |
+| 13 | 5 | T6.1 Accessibility pass | Sonnet 5.5 | medium | waves 1–4 | T6.2, T6.3, T6.4 |
+| 14 | 5 | T6.2 Performance profiling and fixes | Sonnet 5.5 | high | waves 1–4; a human runs `/bench.html` on an M1 | T6.1, T6.3, T6.4 |
+| 15 | 5 | T6.3 Cross-browser end-to-end suite | Sonnet 5.5 | medium | waves 1–4 | T6.1, T6.2, T6.4 |
+| 16 | 5 | T6.4 PWA, bundle budget and deploy | Haiku 5.5 | low | waves 1–4 | T6.1, T6.2, T6.3 |
+| 17 | 6 | T7.1 Theme tokens and palettes | Sonnet 5.5 | medium | T2.7 | any wave after wave 1 (spare capacity) |
+| 18 | 6 | T7.2 Section and panel styling | Sonnet 5.5 | medium | T7.1 | T7.3 |
+| 19 | 6 | T7.3 Theme chooser | Haiku 5.5 | low | T7.1 | T7.2 |
+| — | — | T4.6 Independent accuracy review, then expert sign-off | Sonnet 5.5 (fresh context), then a human | high | T4.7 | anything |
+
+Notes:
+- **Wave 1** tasks touch different files: T2.6 the control kit (`ui/components`), T2.7 the app shell and layout (`ui/App.tsx`, CSS), T5.1 state and audio wiring (`state/`, `app/runtime.ts`, a new `TrackMixer`), T5.4 a new pure command stack. Expect small merge conflicts in `app/runtime.ts` and `App.tsx` only.
+- **T5.4 starts early on purpose.** It is pure logic with no dependencies, and T2.6 (typed values), T4.3 ("Set it up") and T5.3b all need undo.
+- **T7.1 depends only on T2.7** (it restyles the new layout), so a spare agent can take it while waves 2–5 run. It is still lowest priority.
+- ★ tasks need a fresh-context Sonnet 5.5 review (high effort) before merge.
 
 ---
 
@@ -175,7 +205,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
   - A `MockEngine` implementing the interface (logs calls, no audio) so UI lanes can work before the real engine exists.
 - **Acceptance:** registry covers 100% of PRD controls (checklist in PR); schemas round-trip a sample patch and project; Orchestrator signs off. After merge these files are locked.
 - **Complexity:** M (small code, high leverage — mistakes ripple everywhere)
-- **Model:** Opus 5.5, high effort
+- **Model:** done (implemented with Sonnet 5.5)
 
 #### T0.3 UI component kit
 - **PRD:** §2 principles
@@ -208,7 +238,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
   - Voice lifecycle: after release completes, stop sources and disconnect all nodes.
 - **Acceptance:** OfflineAudioContext tests: note renders expected fundamental (FFT peak within 1%); release reaches silence and node count returns to baseline; no discontinuities > threshold at note start/end and when retriggered mid-release; envelope timing within ±2 ms.
 - **Complexity:** XL
-- **Model:** Opus 5.5, high effort
+- **Model:** done (implemented with Sonnet 5.5)
 
 #### T1.3 Pulse oscillator worklet (PWM) ★
 - **PRD:** §3.1 (pulse width), §7.2
@@ -216,7 +246,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Deliverables:** `AudioWorkletProcessor` generating band-limited pulse via PolyBLEP; `AudioParam`s `frequency`, `detune`, `pulseWidth` (a-rate so LFO can drive PWM); loader that registers the module once per context; integration point in `Voice`.
 - **Acceptance:** aliasing test: at 4 kHz fundamental, energy above Nyquist-folded harmonics stays below −40 dB relative to fundamental; PW 50% matches square within tolerance; PW sweep has no clicks; CPU: 64 instances run under 10% of an audio render quantum budget on Chromium.
 - **Complexity:** L
-- **Model:** Opus 5.5, high effort
+- **Model:** done (implemented with Sonnet 5.5)
 
 #### T1.4 Voice allocator, voicing modes and glide ★
 - **PRD:** §3.5
@@ -224,7 +254,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Deliverables:** allocator for poly (1–8 voices, steal oldest with a 5 ms fade), mono (last-note priority, retrigger), legato (no retrigger while notes held, glide between them); glide via `setTargetAtTime` on frequency; held-note stack so releasing the top note in mono returns to the previous held note; sustain-pedal semantics (notes released while sustain held stay on until pedal up); `allNotesOff`.
 - **Acceptance:** unit tests for every mode with scripted note sequences, including stealing, sustain and note-stack fallback; no stuck notes after 10,000 randomised on/off events (fuzz test).
 - **Complexity:** L
-- **Model:** Opus 5.5, medium effort
+- **Model:** done (implemented with Sonnet 5.5)
 
 #### T1.5 LFO and modulation routing
 - **PRD:** §3.4
@@ -256,7 +286,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Deliverables:** helper to render a patch + note list offline and compute RMS, peak, FFT, click detector; golden-render tests for each teaching preset (spectral fingerprint, not exact samples); performance benchmark page: 8 tracks × 8 voices, all effects on, reporting audio underruns.
 - **Acceptance:** CI runs audio tests in headless Chromium; benchmark documented with numbers on an M1 MacBook Air.
 - **Complexity:** M
-- **Model:** Opus 5.5, medium effort
+- **Model:** done (implemented with Sonnet 5.5)
 
 ---
 
@@ -265,7 +295,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 #### T2.1 Panel layout and signal-flow connectors
 - **PRD:** §2
 - **Depends on:** T0.3
-- **Deliverables:** top bar (preset menu, master volume, audio on/off, tempo, help index button); synth panel with sections in signal-flow order (sources → mixer → filter → amp, envelopes and LFO below, effects → master); connector lines drawn between sections; responsive down to 1280 px wide; zones for keyboard and composer (collapsible).
+- **Deliverables:** top bar (preset menu, master volume, audio on/off, tempo, help index button); synth panel with sections in signal-flow order (sources → mixer → filter → amp, envelopes and LFO below, effects → master); connector lines drawn between sections; responsive down to 1280 px wide; zones for keyboard and composer. (Superseded by T2.7: the keyboard is pinned and the composer becomes a tab.)
 - **Acceptance:** matches the PRD signal-flow diagram; no horizontal scroll at 1280 px; layout snapshot test.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, medium effort
@@ -299,7 +329,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Depends on:** T1.7
 - **Deliverables:** Init preset; 12 teaching presets as JSON, each with `teaches` metadata linking to a help entry; preset menu; save user presets to IndexedDB; import/export JSON with schema validation and migration hook.
 - **Split:**
-  - T2.5a sound design of the 12 presets — Opus 5.5, medium (requires synth knowledge; each preset must clearly demonstrate one concept).
+  - T2.5a sound design of the 12 presets — done (Sonnet 5.5). Each preset's concept is verified by measurement in `presets.audio.test.ts`; the human listening check is still open.
   - T2.5b preset storage and menu — Haiku 5.5, low.
 - **Acceptance:** every preset validates against `PatchSchema`; each preset's demonstrated concept is audible (orchestrator listening check).
 - **Complexity:** M overall
@@ -332,7 +362,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 #### T2.7 Fixed-viewport tabbed layout ★ (priority 2)
 - **Why:** the synth panel is now taller than a laptop screen, so the on-screen keyboard and the bottom zones scroll out of view. Players need the keyboard visible at all times, and they should not have to scroll to reach other controls.
 - **Goal:** on a normal laptop screen, nothing scrolls. Controls are grouped into tabs, and you switch between tabs instead of scrolling. A tab only scrolls if its own contents are taller than the space available.
-- **Depends on:** T2.1 (panel layout), T2.2 (section panels), T3.2 (on-screen keyboard), T4.1 (help drawer), T2.6 (numeric entry, which must work inside tabs).
+- **Depends on:** T2.1, T2.2, T3.2, T4.1 (all done). Can be built in parallel with T2.6; merge after it, then check that typed values work inside every tab.
 - **Deliverables:**
   - **Keyboard pinned to the bottom of the viewport.** It stays visible and in place while any tab is open, with the help drawer open or closed, and while the page is scrolled (there should be nothing to scroll on a normal screen, but this holds if there is). The keyboard's own horizontal scroller still works.
   - **Tab bar** under the top bar with one tab per group. Proposed grouping (confirm before building; each group is one registry section list, so the groups are easy to change):
@@ -350,7 +380,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
   - Visualisers (scope, spectrum, meter, plots) keep working in every tab; they keep a single shared frame loop (`raf-loop.ts`).
 - **Acceptance:**
   - Playwright on Chromium, Firefox and WebKit at 1280×720 and 1280×800 with the help drawer open and closed: `document.documentElement.scrollHeight` equals the viewport height for every tab, and the keyboard's bounding box is fully inside the viewport.
-  - Each tab's largest content fits the viewport at 1280×720; any tab that does not is listed in the test as a known exception and must be fixed before release.
+  - A tab whose content is taller than the space available scrolls inside the tab body only; the test checks that the page itself never scrolls and that the keyboard and tab bar stay in place while that tab scrolls.
   - Tab keyboard behaviour is tested (arrows, Home, End, Tab order) and axe passes with each tab open.
   - Switching tabs does not change the patch, stop notes, or interrupt a held note (checked against the engine state).
   - Opening help for a control on another tab selects that tab and highlights the control.
@@ -410,8 +440,8 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Depends on:** T0.2 (registry for ids); can start immediately after
 - **Deliverables:** ~10 section entries following the template, each with a "Beyond this synth" section covering at least the PRD §4.3 table row; ~60 control entries (what it does, range in plain terms, one tip); glossary of ~40 terms; `tryThis` diffs for each section.
 - **Split:**
-  - T4.4a section entries — Opus 5.5, high effort (accuracy and pedagogy matter most here).
-  - T4.4b control entries and glossary — Sonnet 5.5, medium effort, working from T4.4a's style.
+  - T4.4a section entries — done (Sonnet 5.5).
+  - T4.4b control entries and glossary — done (Sonnet 5.5).
 - **Acceptance:** content check passes; reading level check (e.g. Flesch-Kincaid grade ≤ 9) in CI as a warning; British English.
 - **Complexity:** L (volume plus accuracy)
 
@@ -429,9 +459,18 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Deliverables:** review report per entry: factual errors, misleading simplifications, missing "Beyond this synth" points, claims about named commercial synths that need checking; fixes applied in a follow-up PR. Human expert review follows.
 - **Acceptance:** zero open factual issues; human reviewer sign-off.
 - **Complexity:** M
-- **Model:** Opus 5.5, high effort (fresh context, not the writing agent)
+- **Model:** Sonnet 5.5, high effort, in a fresh context (not the agent that wrote the content); then a human synth designer.
+- **Status:** author self-review done (`docs/content-review.md`); independent review and human sign-off open. Run after T4.7.
 
 ---
+
+#### T4.7 Help content update for the new layout and the composition tool
+- **Why:** the help was written before T2.6, T2.7 and Phase 5. The Composition entry describes features that do not exist yet, and some glossary terms are never linked.
+- **Depends on:** T2.6, T2.7, T5.3b, T5.5.
+- **Deliverables:** rewrite `content/help/sections/composition.md` against the real piano roll, transport and recording; mention typed values in the relevant control entries; describe the tabs and the pinned keyboard in the keyboard entry; link or remove the glossary terms the content check reports as unused.
+- **Acceptance:** `npm run content` passes with no unused-glossary warnings; the composition entry matches the shipped behaviour (checked against the e2e tests).
+- **Complexity:** S
+- **Model:** Sonnet 5.5, medium effort
 
 ### Phase 5 — Composition tool
 
@@ -449,7 +488,7 @@ Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are
 - **Deliverables:** lookahead scheduler (timer ~25 ms in a Worker to avoid main-thread throttling, schedules 100 ms ahead on `AudioContext.currentTime`); tick↔seconds conversion with PPQ 960; loop region with seamless wrap (notes spanning the loop end are cut and re-triggered correctly); play/stop/return-to-start; playhead position API for UI; metronome (accented downbeat) and one-bar count-in; live edits during playback take effect within the lookahead window; tempo change while playing.
 - **Acceptance:** offline test: 16 bars of 1/16 notes at 120 BPM start within 1 ms of target; 30 minutes of looping shows no drift; no double-triggered or missed notes at loop boundary; edits during playback never cause stuck notes.
 - **Complexity:** L
-- **Model:** Opus 5.5, high effort
+- **Model:** Sonnet 5.5, high effort (★: fresh-context Sonnet review before merge)
 
 #### T5.3 Piano roll editor
 Split into three tasks so the hardest part is isolated.
@@ -466,13 +505,13 @@ Split into three tasks so the hardest part is isolated.
 - **Deliverables:** hit-testing (body vs right-edge resize handle); click to add with current length; drag to draw length; move (pitch and time) with snap; resize; click/shift-click/box selection; delete; Cmd/Ctrl+D duplicate; copy/paste at playhead; arrow keys transpose (±1, Shift ±12) and nudge; length presets incl. dotted and triplet; snap 1/1–1/32, triplets, off; Alt bypasses snap; audition on add; all edits routed through the command stack (T5.4).
 - **Acceptance:** Playwright tests for each interaction; overlapping same-pitch notes are prevented or trimmed (decide and document); no edit can produce a negative or zero-length note.
 - **Complexity:** XL
-- **Model:** Opus 5.5, high effort
+- **Model:** Sonnet 5.5, high effort (★: fresh-context Sonnet review before merge)
 
 **T5.3c Velocity lane**
 - **Depends on:** T5.3b
 - **Deliverables:** lane under the grid with one bar per note; drag to set velocity; scale selected notes proportionally.
 - **Complexity:** S
-- **Model:** Sonnet 5.5, medium effort
+- **Model:** Haiku 5.5, medium effort (follows the patterns T5.3b sets)
 
 #### T5.4 Undo/redo
 - **PRD:** §6.3
@@ -493,7 +532,7 @@ Split into three tasks so the hardest part is isolated.
 #### T5.6 Track list and arrangement overview
 - **PRD:** §6.2
 - **Depends on:** T5.1
-- **Deliverables:** track headers (name, colour, preset selector, volume, mute, solo, arm, edit sound); miniature note view per track along a shared timeline; drag to reorder; collapsible composer zone.
+- **Deliverables:** track headers (name, colour, preset selector, volume, mute, solo, arm, edit sound); miniature note view per track along a shared timeline; drag to reorder; shown in the Composition tab (T2.7).
 - **Complexity:** M
 - **Model:** Sonnet 5.5, medium effort
 
@@ -521,7 +560,7 @@ Split into three tasks so the hardest part is isolated.
 - **Depends on:** phases 1, 2, 5
 - **Deliverables:** measured latency, capacity (8×8), UI frame time and memory over a 30-minute session; fixes for anything over budget; results table in `docs/performance.md`.
 - **Complexity:** M
-- **Model:** Opus 5.5, medium effort
+- **Model:** Sonnet 5.5, high effort. A human runs the live benchmark on an M1 MacBook Air; the agent cannot reach that hardware.
 
 #### T6.3 Cross-browser end-to-end suite
 - **PRD:** §7.4
@@ -537,13 +576,14 @@ Split into three tasks so the hardest part is isolated.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 
-### Phase 7 — Visual themes (deferred)
+### Phase 7 — Visual themes (later)
 
-The current look is functional but plain. These tasks restyle it. They do not change behaviour, registry or engine. Do them after release.
+The current look is functional but plain. These tasks restyle it. They do not change behaviour, registry or engine. They are lowest priority, but they only need T2.7, so they can run alongside later waves (section 4a).
 
-**Research basis (June 2026 search; re-check before implementing):**
+**Research basis (October 2026 web search; text results only, no screenshots were examined; re-check before implementing):**
 - Yamaha DX7: a high-contrast pairing, dark brown body with a bright green panel, chosen so membrane switches stay readable. [Yamaha Design Insights DX7](https://www.yamaha.com/en/tech-design/design/insights/id_009/)
-- Moog Little Phatty and general hardware convention: black and dark grey front panels are common, with high-contrast graphics and large type for low-light legibility. [Synthtopia / Axel Hartmann design notes](https://axelhartmanndesign.com/moog-little-patty)
+- Hardware convention: black and dark grey are the most common front-panel colours. [SDIY wiki: Panel (homebrew)](https://sdiy.info/wiki/Panel_(homebrew)?oldid=7119)
+- Moog Little Phatty: a control panel angled steeply towards the player, with a slim wave-shaped aluminium profile. [Axel Hartmann Design: Moog Little Phatty](https://axelhartmanndesign.com/moog-little-patty)
 - Korg minilogue: real wood sides and back with a brushed aluminium front; the design is about "new vintage" warmth. [Korg minilogue design](https://www.korg.com/us/products/synthesizers/minilogue/design.php)
 - Massive X 1.1: separate Dark, Light and Flat variants of the skin. Users say the dark skin loses clear section separation. [Synth Anatomy: Massive X 1.1](https://synthanatomy.com/2019/11/massive-x-1-1-improves-a-lot-but-not-everything-envelope-visualization.html), [MusicTech: Massive X 1.1](https://musictech.com/news/massive-x-1-1/)
 - Vital: the default skin colour-codes sections to show what is being modulated; single-colour community skins are a usability concern raised on the Vital forum. [Vital forum: skin pack thread](https://forum.vital.audio/t/black-metal-red-ice-vital-skin-pack/5549)
@@ -569,8 +609,8 @@ The current look is functional but plain. These tasks restyle it. They do not ch
 - **Model:** Sonnet 5.5, medium effort
 
 #### T7.3 Theme chooser and visual review
-- **Deliverables:** a Theme control in the top bar (a `Select` from the control kit, with a help entry); an orchestrator review of all three themes on a real screen at 1280 px and on a dark-mode OS.
-- **Acceptance:** chooser is keyboard-operable; all three themes reviewed and signed off by the orchestrator.
+- **Deliverables:** a Theme control in the top bar (a `Select` from the control kit, with a help entry).
+- **Acceptance:** chooser is keyboard-operable; a human reviews all three themes on a real screen at 1280 px and on a dark-mode OS and signs them off.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 
@@ -578,56 +618,57 @@ The current look is functional but plain. These tasks restyle it. They do not ch
 
 ## 6. Summary table
 
-| ID | Task | Complexity | Model | Effort |
-| --- | --- | --- | --- | --- |
-| T0.1 | Scaffold | S | Haiku 5.5 | low |
-| T0.2 ★ | Contracts and parameter registry | M | Opus 5.5 | high |
-| T0.3 | UI component kit | M | Sonnet 5.5 | medium |
-| T1.1 | Audio context and master chain | S | Sonnet 5.5 | medium |
-| T1.2 ★ | Voice graph and envelopes | XL | Opus 5.5 | high |
-| T1.3 ★ | Pulse oscillator worklet | L | Opus 5.5 | high |
-| T1.4 ★ | Voice allocator and glide | L | Opus 5.5 | medium |
-| T1.5 | LFO and modulation | M | Sonnet 5.5 | high |
-| T1.6 | Effects chain | M | Sonnet 5.5 | medium |
-| T1.7 | Engine assembly and binding | M | Sonnet 5.5 | high |
-| T1.8 | Audio test harness | M | Opus 5.5 | medium |
-| T2.1 | Panel layout | M | Sonnet 5.5 | medium |
-| T2.2 | Section panels | M | Sonnet 5.5 (Haiku for repeats) | medium |
-| T2.3 | Scope, spectrum, meter | M | Sonnet 5.5 | high |
-| T2.4 | Per-section plots | M | Sonnet 5.5 | medium |
-| T2.5a | Teaching preset sound design | M | Opus 5.5 | medium |
-| T2.5b | Preset storage and menu | S | Haiku 5.5 | low |
-| T3.1 | Laptop keyboard input | M | Sonnet 5.5 | medium |
-| T3.2 | On-screen keyboard | S | Sonnet 5.5 | low |
-| T4.1 | Help drawer and navigation | M | Sonnet 5.5 | medium |
-| T4.2 | Help content pipeline | S | Haiku 5.5 | medium |
-| T4.3 | Try this and A/B | S | Sonnet 5.5 | medium |
-| T4.4a | Section help entries | L | Opus 5.5 | high |
-| T4.4b | Control entries and glossary | M | Sonnet 5.5 | medium |
-| T4.5 | Animated concept diagrams | M | Sonnet 5.5 | high |
-| T4.6 ★ | Technical accuracy review | M | Opus 5.5 | high |
-| T5.1 | Project state and multi-track audio | M | Sonnet 5.5 | high |
-| T5.2 ★ | Sequencer scheduler and transport | L | Opus 5.5 | high |
-| T5.3a | Piano roll rendering | M | Sonnet 5.5 | high |
-| T5.3b ★ | Piano roll editing | XL | Opus 5.5 | high |
-| T5.3c | Velocity lane | S | Sonnet 5.5 | medium |
-| T5.4 | Undo/redo | M | Sonnet 5.5 | medium |
-| T5.5 | Recording | L | Sonnet 5.5 | high |
-| T5.6 | Track list | M | Sonnet 5.5 | medium |
-| T5.7 | Persistence | S | Haiku 5.5 | medium |
-| T6.1 | Accessibility | M | Sonnet 5.5 | medium |
-| T6.2 | Performance | M | Opus 5.5 | medium |
-| T6.3 | Cross-browser e2e | M | Sonnet 5.5 | medium |
-| T6.4 | PWA and deploy | S | Haiku 5.5 | low |
-| T2.6 ★ | Editable numeric readouts (priority 1) | S | Sonnet 5.5 | medium |
-| T2.7 ★ | Fixed-viewport tabbed layout (priority 2) | M | Sonnet 5.5 | high |
-| T7.1 | Theme tokens and palettes | S | Sonnet 5.5 | medium |
-| T7.2 | Section and panel styling | M | Sonnet 5.5 | medium |
-| T7.3 | Theme chooser and visual review | S | Haiku 5.5 | low |
+| ID | Task | Complexity | Status | Model | Effort | Wave |
+| --- | --- | --- | --- | --- | --- | --- |
+| T0.1 | Scaffold | S | done | Sonnet 5.5 | — | — |
+| T0.2 ★ | Contracts and parameter registry | M | done | Sonnet 5.5 | — | — |
+| T0.3 | UI component kit | M | done | Sonnet 5.5 | — | — |
+| T1.1 | Audio context and master chain | S | done | Sonnet 5.5 | — | — |
+| T1.2 ★ | Voice graph and envelopes | XL | done | Sonnet 5.5 | — | — |
+| T1.3 ★ | Pulse oscillator worklet | L | done | Sonnet 5.5 | — | — |
+| T1.4 ★ | Voice allocator and glide | L | done | Sonnet 5.5 | — | — |
+| T1.5 | LFO and modulation | M | done | Sonnet 5.5 | — | — |
+| T1.6 | Effects chain | M | done | Sonnet 5.5 | — | — |
+| T1.7 | Engine assembly and binding | M | done | Sonnet 5.5 | — | — |
+| T1.8 | Audio test harness | M | done | Sonnet 5.5 | — | — |
+| T2.1 | Panel layout | M | done | Sonnet 5.5 | — | — |
+| T2.2 | Section panels | M | done | Sonnet 5.5 | — | — |
+| T2.3 | Scope, spectrum, meter | M | done | Sonnet 5.5 | — | — |
+| T2.4 | Per-section plots | M | done | Sonnet 5.5 | — | — |
+| T2.5a | Teaching preset sound design | M | done | Sonnet 5.5 | — | — |
+| T2.5b | Preset storage and menu | S | done | Sonnet 5.5 | — | — |
+| T3.1 | Laptop keyboard input | M | done | Sonnet 5.5 | — | — |
+| T3.2 | On-screen keyboard | S | done | Sonnet 5.5 | — | — |
+| T4.1 | Help drawer and navigation | M | done | Sonnet 5.5 | — | — |
+| T4.2 | Help content pipeline | S | done | Sonnet 5.5 | — | — |
+| T4.3 | Try this and A/B | S | done | Sonnet 5.5 | — | — |
+| T4.4a | Section help entries | L | done | Sonnet 5.5 | — | — |
+| T4.4b | Control entries and glossary | M | done | Sonnet 5.5 | — | — |
+| T4.5 | Animated concept diagrams | M | done | Sonnet 5.5 | — | — |
+| T2.6 ★ | Editable numeric readouts | S | to do | Sonnet 5.5 | medium | 1 |
+| T2.7 ★ | Fixed-viewport tabbed layout | M | to do | Sonnet 5.5 | high | 1 |
+| T5.1 | Project state and multi-track audio | M | to do | Sonnet 5.5 | high | 1 |
+| T5.4 | Undo/redo | M | to do | Sonnet 5.5 | medium | 1 |
+| T5.2 ★ | Sequencer scheduler and transport | L | to do | Sonnet 5.5 | high | 2 |
+| T5.3a | Piano roll rendering | M | to do | Sonnet 5.5 | high | 2 |
+| T5.6 | Track list | M | to do | Sonnet 5.5 | medium | 2 |
+| T5.7 | Persistence | S | to do | Haiku 5.5 | medium | 2 |
+| T5.3b ★ | Piano roll editing | XL | to do | Sonnet 5.5 | high | 3 |
+| T5.5 | Recording | L | to do | Sonnet 5.5 | high | 3 |
+| T5.3c | Velocity lane | S | to do | Haiku 5.5 | medium | 4 |
+| T4.7 | Help content update | S | to do | Sonnet 5.5 | medium | 4 |
+| T6.1 | Accessibility | M | to do | Sonnet 5.5 | medium | 5 |
+| T6.2 | Performance | M | to do | Sonnet 5.5 | high | 5 |
+| T6.3 | Cross-browser e2e | M | to do | Sonnet 5.5 | medium | 5 |
+| T6.4 | PWA and deploy | S | to do | Haiku 5.5 | low | 5 |
+| T7.1 | Theme tokens and palettes | S | to do | Sonnet 5.5 | medium | 6 |
+| T7.2 | Section and panel styling | M | to do | Sonnet 5.5 | medium | 6 |
+| T7.3 | Theme chooser | S | to do | Haiku 5.5 | low | 6 |
+| T4.6 ★ | Accuracy review (independent + human) | M | to do | Sonnet 5.5, then a human | high | — |
 
-★ = needs a fresh-context review by the reviewer agent before merge.
+★ = needs a fresh-context review by a Sonnet 5.5 reviewer (high effort) before merge.
 
-Rough split: 12 Opus tasks (the critical and risky ones), 21 Sonnet, 6 Haiku.
+Remaining work: 20 items, 16 on Sonnet 5.5 and 4 on Haiku 5.5. No task uses Claude Opus.
 
 ---
 
@@ -652,6 +693,6 @@ Rough split: 12 Opus tasks (the critical and risky ones), 21 Sonnet, 6 Haiku.
 | Browser differences in Web Audio (Firefox lacks some automation methods; Safari worklet quirks) | Medium | Fallback paths in T1.2; cross-browser e2e from Phase 1, not only at the end |
 | Sequencer timing drift under UI load | High — composer unusable | Worker-based timer, audio-clock scheduling (T5.2); long-run drift test |
 | Piano-roll interaction complexity balloons | Medium — schedule | Split into T5.3a/b/c; command stack first; fixed v1 tool set |
-| Help content inaccurate | High — undermines the product's purpose | Opus writes section entries; separate Opus review; human expert sign-off |
+| Help content inaccurate | High — undermines the product's purpose | Content check in CI; independent fresh-context Sonnet review; human expert sign-off (T4.6) |
 | Contract churn between parallel agents | Medium | T0.2 locked after merge; changes only via orchestrator |
 | Laptop key ghosting confuses users | Low | Explained in keyboard help entry (PRD §5.3) |
