@@ -22,7 +22,7 @@ function MasterVolume() {
 
 function AudioButton() {
   const audio = useApp((s) => s.audio);
-  const { startAudio, host, appStore } = useServices();
+  const { startAudio, host, appStore, transportStore } = useServices();
   const on = audio === 'on';
   return (
     <button
@@ -33,6 +33,11 @@ function AudioButton() {
       disabled={audio === 'starting'}
       onClick={async () => {
         if (on) {
+          // Stop the sequencer first and let its ~30 ms note fade finish, so suspending the clock does not cut it off.
+          if (transportStore.getState().isRunning()) {
+            transportStore.getState().stop();
+            await new Promise((r) => setTimeout(r, 50));
+          }
           await host.stop();
           appStore.getState().setAudio('off');
         } else {

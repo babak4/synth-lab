@@ -47,6 +47,8 @@ export class Sequencer implements TransportDriver {
   private readonly listeners = new Set<(e: 'playing' | 'ended') => void>();
   /** Tracks that were sent sequencer notes, so stop silences exactly those. */
   private readonly touched = new Set<string>();
+  /** Clicks scheduled but not yet finished, so stop / seek can cancel the ones still ahead. */
+  private readonly clicks = new Set<() => void>();
   private pending: Display[] = [];
   /** Display note-ons already emitted without their note-off, so stop can close them. */
   private readonly shown = new Map<string, Display>();
@@ -149,7 +151,8 @@ export class Sequencer implements TransportDriver {
   private dispatch(e: PlanEvent): void {
     const { context, destination } = this.deps;
     if (e.kind === 'click') {
-      scheduleClick(context, destination, e.time, e.accent);
+      const cancel = scheduleClick(context, destination, e.time, e.accent, () => this.clicks.delete(cancel));
+      this.clicks.add(cancel);
       return;
     }
     const engine = this.deps.getEngine(e.trackId);
@@ -167,6 +170,7 @@ export class Sequencer implements TransportDriver {
   private silence(): void {
     for (const id of this.touched) this.deps.getEngine(id)?.allNotesOff();
     this.touched.clear();
+    for (const cancel of [...this.clicks]) cancel();
     this.pending = [];
     for (const d of this.shown.values()) this.show({ ...d, on: false });
     this.shown.clear();

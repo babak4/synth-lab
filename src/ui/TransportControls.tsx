@@ -33,7 +33,7 @@ function useTransportShortcuts(toggle: () => unknown, home: () => unknown): void
 /** Bar.beat readout; written straight into the DOM ~10 times a second (a beat is far slower), so it never re-renders. */
 function PositionReadout() {
   const { transportStore, projectStore } = useServices();
-  const ref = useRef<HTMLOutputElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const paint = () => {
       const el = ref.current;
@@ -49,7 +49,8 @@ function PositionReadout() {
       offStore();
     };
   }, [transportStore, projectStore]);
-  return <output ref={ref} className="transport-pos" aria-label="Position (bar.beat)" data-testid="transport-position" />;
+  // A timer role is not a live region, so screen readers do not announce every beat.
+  return <span ref={ref} role="timer" aria-live="off" className="transport-pos" aria-label="Position (bar.beat)" data-testid="transport-position" />;
 }
 
 export function TransportControls() {

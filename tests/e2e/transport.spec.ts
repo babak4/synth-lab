@@ -59,6 +59,8 @@ test('transport controls are named, and Play / Stop / Return to start drive the 
   for (const name of ['Return to start', 'Play', 'Loop', 'Metronome', 'Count-in']) {
     await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
   }
+  // The readout is a timer, not a live region, so screen readers do not announce every beat.
+  await expect(page.getByRole('timer', { name: 'Position (bar.beat)' })).toHaveAttribute('aria-live', 'off');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await expect.poll(() => state(page)).toBe('playing');

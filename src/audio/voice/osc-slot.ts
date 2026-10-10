@@ -50,10 +50,7 @@ export class OscSlot {
     if (this.started) return;
     this.started = true;
     this.startTime = when;
-    // An oscillator whose frequency is driven by a node is only started to the nearest render quantum
-    // (up to 2.7 ms late) in Chromium. Start it now instead: its frequency input is 0 until the voice's
-    // pitch automation fires at `when` (sample-accurate), so it stays silent at phase 0 until then.
-    this.current?.src.start(Math.min(when, this.ctx.currentTime));
+    this.current?.src.start(when);
   }
 
   setKind(kind: SlotKind, at = this.ctx.currentTime): void {

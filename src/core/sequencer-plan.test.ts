@@ -89,6 +89,14 @@ describe('timing', () => {
     expect(clicks(r.events).map((e) => e.accent)).toEqual([true, false, true, false]);
   });
 
+  it('the count-in clicks even with the metronome off; only the song clicks follow the switch', () => {
+    const p = project([note('a', 60, 0, 480)], { lengthBars: 2 });
+    const { events } = run(mk(p, { countIn: BAR }), p, { until: 8, metronome: false });
+    expect(clicks(events).map((e) => e.accent)).toEqual([true, false, false, false]);
+    expect(Math.max(...clicks(events).map((e) => e.time))).toBeLessThan(2);
+    expect(ons(events)[0]!.time).toBeCloseTo(2, 9);
+  });
+
   it('metronome off schedules no clicks', () => {
     const p = project([], { lengthBars: 2 });
     expect(clicks(run(mk(p), p, { until: 6 }).events)).toHaveLength(0);
@@ -171,6 +179,55 @@ describe('looping', () => {
     expect(plan.positionAt(3.999).tick).toBeLessThan(BAR * 3);
     expect(plan.positionAt(3.999).tick).toBeGreaterThan(BAR * 3 - 20);
     expect(plan.positionAt(4.5).tick).toBeCloseTo(BAR + PPQ, 6);
+  });
+
+  it('the playhead read at the heard time (behind the clock) never leaves the loop after a wrap', () => {
+    const p = project([], { loop });
+    const plan = mk(p, { fromTick: BAR });
+    const lat = 0.3;
+    let checked = 0;
+    run(plan, p, {
+      until: 20,
+      each: (now) => {
+        if (now > lat + 0.2) {
+          const tick = plan.positionAt(now - lat).tick;
+          expect(tick, `at ${now}`).toBeGreaterThanOrEqual(BAR - 1e-6);
+          expect(tick).toBeLessThanOrEqual(BAR * 3 + 1e-6);
+          checked++;
+        }
+        return undefined;
+      },
+    });
+    expect(checked).toBeGreaterThan(500);
+  });
+
+  it('a loop edited so that its end is behind the playhead wraps at once, and playback goes on', () => {
+    const p = project([note('a', 60, 0, 240)], { lengthBars: 4, loop: { enabled: true, startBar: 0, endBar: 4 } });
+    const plan = mk(p);
+    let edited = false;
+    const ticks: number[] = [];
+    const { events } = run(plan, p, {
+      until: 12,
+      each: (now, q) => {
+        ticks.push(plan.positionAt(now).tick);
+        if (now < 5 || edited) return undefined;
+        edited = true; // 2.5 bars in
+        return { ...q, loop: { enabled: true, startBar: 0, endBar: 1 } };
+      },
+    });
+    expect(plan.ended).toBe(false);
+    expect(Math.max(...ticks.slice(ticks.findIndex((_, i) => i * STEP > 5.3)))).toBeLessThan(BAR + 1);
+    // Bar 0's note keeps coming round: once at the start, then every 2 s after the edit.
+    expect(ons(events).length).toBeGreaterThanOrEqual(4);
+    expect(plan.activeCount).toBeLessThanOrEqual(1);
+  });
+
+  it('starting past the loop end with the loop on plays on to the song end', () => {
+    const p = project([], { lengthBars: 4, loop: { enabled: true, startBar: 0, endBar: 1 } });
+    const plan = mk(p, { fromTick: BAR * 2 });
+    run(plan, p, { until: 10 });
+    expect(plan.ended).toBe(true);
+    expect(plan.endTime).toBeCloseTo(at(BAR * 2), 9);
   });
 
   it('turning the loop on and off while playing', () => {

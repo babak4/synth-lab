@@ -27,7 +27,10 @@ export function createBasicOsc(ctx: BaseAudioContext, type: OscillatorType): Osc
     node: osc,
     frequency: osc.frequency,
     detune: osc.detune,
-    start: (when) => osc.start(when),
+    // Chromium honours start() on an oscillator whose frequency is driven by a node only to the nearest
+    // render quantum (up to 2.7 ms late). Start it now instead: its frequency input is 0 until the voice's
+    // pitch automation fires at `when` (sample-accurate), so it stays silent at phase 0 until then.
+    start: (when) => osc.start(Math.min(when, ctx.currentTime)),
     stop: (when) => osc.stop(when),
     onEnded: (cb) => {
       osc.onended = cb;

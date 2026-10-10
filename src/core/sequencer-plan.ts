@@ -20,6 +20,8 @@
  *    duration, so shortening, moving or deleting a sounding note releases it. A note added at or ahead of
  *    the playhead (even inside the already-scheduled window) is picked up by the next call; a note that
  *    has disappeared is released immediately. Nothing can be left sounding.
+ *  - A loop edited so its end lies behind the playhead wraps to its start at once. Starting playback past
+ *    the loop end plays on to the song end instead (the start position is respected).
  *  - A tempo change takes effect from the first event not yet scheduled, so the timeline stays continuous.
  */
 import type { LoopRegion, Note, TimeSignature } from './contracts/project';
@@ -80,6 +82,9 @@ interface Active {
   onTime: number;
 }
 
+/** How far behind the audio clock `positionAt` may be asked (covers any plausible output latency). */
+export const PRUNE_GRACE_S = 0.5;
+
 export class SequencerPlan {
   private readonly tempos: TempoAnchor[];
   private readonly wraps: WrapAnchor[];
@@ -88,6 +93,8 @@ export class SequencerPlan {
   /** Notes triggered recently (key → unwrapped tick), so a late-added note is caught up exactly once. */
   private readonly fired = new Map<string, number>();
   private isEnded = false;
+  /** The last slice was heading for a loop end (so a loop edited behind the playhead wraps at once). */
+  private inLoop = false;
   private endAt = 0;
   private endSong = 0;
   private readonly fromTick: number;
@@ -138,7 +145,7 @@ export class SequencerPlan {
   positionAt(t: number): PlanPosition {
     const u = this.uAt(t);
     if (u < 0) return { tick: this.fromTick, countIn: true, ended: false };
-    const song = u + this.offsetFor(u);
+    const song = Math.max(0, u + this.offsetFor(u));
     if (this.isEnded && t >= this.endAt) return { tick: this.endSong, countIn: false, ended: true };
     return { tick: song, countIn: false, ended: false };
   }
@@ -183,13 +190,12 @@ export class SequencerPlan {
       if (endU <= cu) break;
 
       if (cu < 0) {
-        // Count-in: clicks only, spaced from the first one.
+        // Count-in: clicks only, spaced from the first one. A count-in is a request for clicks, so they
+        // play whether or not the metronome is switched on for the song.
         const ce = Math.min(endU, 0);
-        if (metronome) {
-          const u0 = this.wraps[0]!.u;
-          for (let u = u0 + Math.ceil((cu - u0) / pulse) * pulse; u < ce; u += pulse) {
-            out.push({ kind: 'click', time: this.timeOf(u), accent: (u - u0) % barTicks === 0 });
-          }
+        const u0 = this.wraps[0]!.u;
+        for (let u = u0 + Math.ceil((cu - u0) / pulse) * pulse; u < ce; u += pulse) {
+          out.push({ kind: 'click', time: this.timeOf(u), accent: (u - u0) % barTicks === 0 });
         }
         this.cursorU = ce;
         continue;
@@ -198,7 +204,14 @@ export class SequencerPlan {
       const offset = this.offsetFor(cu);
       const song0 = cu + offset;
       const loop = validLoop(project.loop, sig);
+      if (loop !== null && song0 >= loop.end && this.inLoop) {
+        // The loop was edited so that its end is now behind the playhead: wrap straight to its start.
+        this.releaseAll(this.timeOf(cu), now, out);
+        this.wraps.push({ u: cu, offset: loop.start - cu });
+        continue;
+      }
       const wrapsAtLoopEnd = loop !== null && song0 < loop.end;
+      this.inLoop = wrapsAtLoopEnd;
       const boundary = wrapsAtLoopEnd ? loop.end : songEnd;
       if (song0 >= boundary) {
         // Already at/after the end (start position past the song, or the song was shortened).
@@ -272,9 +285,13 @@ export class SequencerPlan {
 
   /** Forget anchors and fired notes that lie entirely in the past, so long runs stay O(1). */
   private prune(now: number): void {
-    while (this.tempos.length > 1 && this.tempos[1]!.time <= now) this.tempos.shift();
+    // Keep anchors a little longer than "now": the playhead is read at the heard time, which trails the
+    // audio clock by the output latency (and `positionAt` must still know the pre-wrap offset then).
+    const keepFrom = now - PRUNE_GRACE_S;
+    while (this.tempos.length > 1 && this.tempos[1]!.time <= keepFrom) this.tempos.shift();
+    const uKeep = this.uAt(keepFrom);
+    while (this.wraps.length > 1 && this.wraps[1]!.u <= uKeep) this.wraps.shift();
     const uNow = this.uAt(now);
-    while (this.wraps.length > 1 && this.wraps[1]!.u <= uNow) this.wraps.shift();
     for (const [k, u] of this.fired) if (u < uNow - 1) this.fired.delete(k);
   }
 

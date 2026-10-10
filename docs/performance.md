@@ -86,7 +86,8 @@ renders 16 bars of 1/16 notes at 120 BPM and measures every onset within 1 ms of
 Chromium quirk found on the way: `start(when)` on a `ConstantSourceNode`, or on an `OscillatorNode`
 whose frequency is driven by a node, is only honoured to the nearest 128-frame render quantum (notes
 came out up to 2.7 ms late), while `AudioParam` automation is sample-accurate. Voices now start those
-sources immediately and let the automation place the note (`voice.ts` `startSources`, `osc-slot.ts`).
+sources immediately and let the automation place the note (`voice.ts` `startSources`, `createBasicOsc` in `osc-source.ts`; the pulse worklet's gate keeps its
+exact `when`, so no DC reaches the filter early).
 
 ## Still open (T6.2)
 

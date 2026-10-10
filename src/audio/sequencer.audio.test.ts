@@ -197,4 +197,13 @@ describe('Sequencer through an OfflineAudioContext', () => {
     expect(peakAt(START_LEAD_S)).toBeGreaterThan(peakAt(START_LEAD_S + 0.5) * 1.3); // accent
     expect(peakAt(START_LEAD_S + 2)).toBeGreaterThan(peakAt(START_LEAD_S + 2.5) * 1.3); // bar 1 downbeat
   }, 60_000);
+
+  it('stop cancels metronome clicks that are already scheduled but have not sounded', async () => {
+    const s = await session(projectWith([], { lengthBars: 4 }), { metronome: true, seconds: 3 });
+    s.seq.start(0, false);
+    // Clicks fall at 0.05, 0.55, 1.05 s. The pass at ~0.475 s has scheduled the one at 0.55 s; stop then.
+    const out = await s.render(2.5, { 0.46: () => s.seq.stop() });
+    expect(rms(win(out, 0.05, 0.1))).toBeGreaterThan(0.01); // the first click did sound
+    expect(rms(win(out, 0.5, 2.5))).toBeLessThan(1e-6); // and the one that was ahead of the stop did not
+  }, 60_000);
 });
