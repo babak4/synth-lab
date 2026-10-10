@@ -119,9 +119,4 @@ describe('track list', () => {
     expect(overview).toHaveAccessibleName('Select Track 1: 2 notes over 8 bars');
     expect(overview.querySelectorAll('rect.mini-note')).toHaveLength(2);
   });
-
-  it('keeps the piano roll slot', () => {
-    mount();
-    expect(screen.getByTestId('piano-roll-slot')).toBeTruthy();
-  });
 });

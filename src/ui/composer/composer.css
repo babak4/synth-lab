@@ -29,4 +29,3 @@
 .track-overview .mini-note { fill: var(--track); stroke: var(--text); stroke-width: 0.5; vector-effect: non-scaling-stroke; }
 
 @container main (max-width: 760px) { .track-row { grid-template-columns: minmax(0, 1fr); } }
-.piano-roll-slot { padding: 12px; border: 1px dashed var(--border); border-radius: var(--radius); }
