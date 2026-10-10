@@ -54,13 +54,13 @@ This installs dependencies the first time, starts the dev server and opens http:
 
 Without `make`, run `npm install` and then `npm run dev`.
 
-Development commands:
+Development commands (each has a `make` target; the npm command it runs is in brackets):
 
 ```bash
-npm run check      # typecheck, lint, unit and audio tests, help-content check (what CI runs)
-npm test           # unit and audio tests (audio runs in headless Chromium)
-npm run e2e        # end-to-end tests on Chromium, Firefox and WebKit
-npm run content    # validate the help content in content/help/
+make check         # typecheck, lint, unit and audio tests, help-content check (what CI runs) [npm run check]
+make test          # unit and audio tests; audio runs in headless Chromium [npm test]
+make e2e           # installs the browsers, then runs end-to-end tests on Chromium, Firefox and WebKit [npm run e2e]
+npm run content    # validate the help content in content/help/ (no make target)
 ```
 
 `CLAUDE.md` has more detail on the architecture, and single-test commands.
