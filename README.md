@@ -44,13 +44,15 @@ The on-screen keyboard can be played with the mouse or touch, including by dragg
 
 ## Running it locally
 
-Requires Node.js 22 or newer.
+Requires Node.js 22 or newer. To start the app, run:
 
 ```bash
-npm install
-npx playwright install chromium firefox webkit   # only needed for the e2e tests
-npm run dev                                      # http://localhost:5173
+make
 ```
+
+This installs dependencies the first time, starts the dev server and opens http://localhost:5173 in your browser. Use `make PORT=5180` for another port, and `make clean` to remove installed dependencies.
+
+Without `make`, run `npm install` and then `npm run dev`.
 
 Development commands:
 
