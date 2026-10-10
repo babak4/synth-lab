@@ -138,6 +138,18 @@ Phase 6  T6.1–T6.4 after phases 2–5
 
 ---
 
+## 4a. Remaining work — priority order
+
+Work through these in order. Task details are in section 5 (T2.6 and Phase 7 are defined there).
+
+1. **T2.6 Editable numeric readouts** (priority: do this before anything else)
+2. Phase 5 — composition tool (T5.1 to T5.7)
+3. T4.6 — independent accuracy review and human sign-off of the help content (not an agent task; see `docs/content-review.md`)
+4. Phase 6 — quality and release (T6.1 to T6.4)
+5. Phase 7 — visual themes (T7.1 to T7.3; deferred until after release)
+
+---
+
 ## 5. Tasks
 
 ### Phase 0 — Foundations
@@ -290,6 +302,31 @@ Phase 6  T6.1–T6.4 after phases 2–5
   - T2.5b preset storage and menu — Haiku 5.5, low.
 - **Acceptance:** every preset validates against `PatchSchema`; each preset's demonstrated concept is audible (orchestrator listening check).
 - **Complexity:** M overall
+
+---
+
+### Phase 2b — Priority additions
+
+#### T2.6 Editable numeric readouts ★ (priority 1)
+- **Why:** rotating a knob to an exact value is slow and fiddly. Players want to click the number and type it.
+- **PRD:** §2 (every control has a reset and an explanation; no new controls), §5.3 (keyboard player must not fire while typing).
+- **Depends on:** T2.2 (panels), T0.3 (control kit), T5.4 for undo once it exists (until then, typed edits are not undoable — say so in the UI notes).
+- **Deliverables:**
+  - Every numeric readout on a knob, slider and the top-bar master volume becomes a text-like button. It looks like the readout today; on hover it shows an underline or border, and it is focusable with Tab.
+  - Click (or Enter or Space when focused) turns it into a text input pre-filled with the value in display form, with the text selected.
+  - Input accepts the display format and plain numbers: `2.5k`, `2500`, `300 ms`, `0.3 s`, `-12 dB`, `50%`, `0.5`, `+3 st`, `-12 cents`. Units are optional when unambiguous; a bare number is read in the control's display unit.
+  - Parsing is the inverse of `formatValue` (`core/params/scale.ts`); values are clamped to the registry range and quantised to its step (so a stepped control snaps and a log control stays musical).
+  - Enter or blur commits; Esc cancels and restores the old value. An unparseable entry keeps the field open with a visible message (`aria-invalid` plus text), and does not change the value.
+  - Committing goes through the same path as a knob drag, so smoothing, the engine binding and the help/A-B state all behave as normal.
+  - Typing never reaches the keyboard player or the `?` key handler (the existing `isTypingTarget` guard already covers text inputs; verify it).
+  - Enum controls and toggles are unchanged.
+- **Acceptance:**
+  - Unit tests: for every continuous registry control, `formatValue` then parse returns the original value within one step; out-of-range and garbage input are rejected or clamped as specified.
+  - Component test: click → type → Enter updates the patch store; Esc restores; invalid input shows the error and keeps the old value.
+  - Playwright on Chromium, Firefox and WebKit: type `2.5k` into Cutoff and the knob and the engine both move; typing `c` or `?` in the field plays no note and opens no help.
+  - axe passes with an editor open.
+- **Complexity:** S
+- **Model:** Sonnet 5.5, medium effort
 
 ---
 
@@ -471,6 +508,43 @@ Split into three tasks so the hardest part is isolated.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 
+### Phase 7 — Visual themes (deferred)
+
+The current look is functional but plain. These tasks restyle it. They do not change behaviour, registry or engine. Do them after release.
+
+**Research basis (June 2026 search; re-check before implementing):**
+- Yamaha DX7: a high-contrast pairing, dark brown body with a bright green panel, chosen so membrane switches stay readable. [Yamaha Design Insights DX7](https://www.yamaha.com/en/tech-design/design/insights/id_009/)
+- Moog Little Phatty and general hardware convention: black and dark grey front panels are common, with high-contrast graphics and large type for low-light legibility. [Synthtopia / Axel Hartmann design notes](https://axelhartmanndesign.com/moog-little-patty)
+- Korg minilogue: real wood sides and back with a brushed aluminium front; the design is about "new vintage" warmth. [Korg minilogue design](https://www.korg.com/us/products/synthesizers/minilogue/design.php)
+- Massive X 1.1: separate Dark, Light and Flat variants of the skin. Users say the dark skin loses clear section separation. [Synth Anatomy: Massive X 1.1](https://synthanatomy.com/2019/11/massive-x-1-1-improves-a-lot-but-not-everything-envelope-visualization.html), [MusicTech: Massive X 1.1](https://musictech.com/news/massive-x-1-1/)
+- Vital: the default skin colour-codes sections to show what is being modulated; single-colour community skins are a usability concern raised on the Vital forum. [Vital forum: skin pack thread](https://forum.vital.audio/t/black-metal-red-ice-vital-skin-pack/5549)
+- Serum: a mostly dark grey base with small bright accents for feedback. [Emastered: Serum vs Massive](https://emastered.com/blog/serum-vs-massive)
+
+**Not confirmed:** the exact default palettes of Serum, Vital, Pigments, Massive X and the Prophet/Juno/Minimoog panels. The searches did not reach their colour values. Before T7.1, pull the screenshots from the vendor product pages and the manuals and record the actual colours. Do not copy a specific synth's trade dress; use the principles above.
+
+#### T7.1 Theme tokens and palettes
+- **Deliverables:** three themes built from the existing CSS variables in `src/ui/theme/theme.css`:
+  - *Graphite* (default dark): dark grey base, one warm accent for active states, one cool accent for modulation.
+  - *Walnut and aluminium* (warm light): cream panel, brown section headers, aluminium-grey controls, minilogue-like.
+  - *Phosphor* (high contrast): near-black, bright green for values and active states, after the DX7 pairing.
+- Keep one accent colour per signal type (audio path, modulation, effects, keyboard) so sections stay distinguishable in every theme. This answers the Massive X and Vital concerns above.
+- Each theme passes the WCAG 2.2 AA contrast checks that `theme.test.ts` already runs; add the new palettes to that test.
+- **Acceptance:** all three themes pass the contrast tests; the theme switch persists in `localStorage` (per-viewer convenience only, per the project's rules); a visual regression screenshot per theme is recorded in `docs/`.
+- **Complexity:** S
+- **Model:** Sonnet 5.5, medium effort
+
+#### T7.2 Section and panel styling
+- **Deliverables:** section headers and borders styled per signal type; knob and slider skins (a bright cap or pointer in the theme accent, a visible value arc); a subtle panel texture option off by default for reduced-motion and print friendliness.
+- **Acceptance:** layout snapshot test still passes; no text drops below AA contrast in any theme; reduced-motion disables any animated effect.
+- **Complexity:** M
+- **Model:** Sonnet 5.5, medium effort
+
+#### T7.3 Theme chooser and visual review
+- **Deliverables:** a Theme control in the top bar (a `Select` from the control kit, with a help entry); an orchestrator review of all three themes on a real screen at 1280 px and on a dark-mode OS.
+- **Acceptance:** chooser is keyboard-operable; all three themes reviewed and signed off by the orchestrator.
+- **Complexity:** S
+- **Model:** Haiku 5.5, low effort
+
 ---
 
 ## 6. Summary table
@@ -516,6 +590,10 @@ Split into three tasks so the hardest part is isolated.
 | T6.2 | Performance | M | Opus 5.5 | medium |
 | T6.3 | Cross-browser e2e | M | Sonnet 5.5 | medium |
 | T6.4 | PWA and deploy | S | Haiku 5.5 | low |
+| T2.6 ★ | Editable numeric readouts (priority 1) | S | Sonnet 5.5 | medium |
+| T7.1 | Theme tokens and palettes | S | Sonnet 5.5 | medium |
+| T7.2 | Section and panel styling | M | Sonnet 5.5 | medium |
+| T7.3 | Theme chooser and visual review | S | Haiku 5.5 | low |
 
 ★ = needs a fresh-context review by the reviewer agent before merge.
 
