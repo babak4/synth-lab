@@ -88,10 +88,13 @@ Based on the implementation plan (`synth-lab-implementation-plan.md`).
 - [x] Factory presets (12 teaching presets plus Init), user presets, import and export
 - [x] Laptop keyboard and on-screen keyboard
 - [x] Help content, help drawer, "Try this" experiments and animated diagrams
+- [x] Type a value into any knob or slider readout
+- [x] Fixed-viewport tabbed layout: keyboard, scope, spectrum and meter always in view
+- [x] Project state with up to 8 tracks, one engine each, mixer (volume, mute, solo) and shared reverb; undo/redo for sound edits
 
 **Next**
 
-- [ ] Composition tool: track state and multi-track audio, sequencer scheduler and transport, piano roll (rendering, editing, velocity lane), undo/redo, recording from the keyboard, track list, autosave and project files
+- [ ] Composition tool: sequencer scheduler and transport, piano roll (rendering, editing, velocity lane), undo/redo for note edits, recording from the keyboard, track list, autosave and project files
 - [ ] Accessibility pass, performance profiling on target hardware, cross-browser test suite
 - [ ] Installable PWA with offline support, bundle budget and static deployment
 
