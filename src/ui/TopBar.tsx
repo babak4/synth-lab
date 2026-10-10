@@ -5,6 +5,7 @@ import { useHelp } from './help/help-context';
 import { INDEX_ID } from '@/state/help-store';
 import { PresetMenu } from './PresetMenu';
 import { UndoRedo } from './history/UndoRedo';
+import { TransportControls } from './TransportControls';
 
 function MasterVolume() {
   const volume = useApp((s) => s.masterVolumeDb);
@@ -83,6 +84,7 @@ export function TopBar() {
       <UndoRedo />
       <MasterVolume />
       <AudioButton />
+      <TransportControls />
       <Tempo />
       <HelpIndexButton />
     </header>

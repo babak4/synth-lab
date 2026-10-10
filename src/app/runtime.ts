@@ -13,6 +13,8 @@ import { createHelpStore } from '@/state/help-store';
 import { createHistoryStore } from '@/state/history-store';
 import { createTabStore } from '@/state/tab-store';
 import { bindPatchToProject, createProjectStore } from '@/state/project-store';
+import { createTransportStore } from '@/state/transport-store';
+import { Sequencer } from '@/audio/sequencer';
 import { WebTrackMixer } from '@/audio/track-mixer';
 import { ReverbHub } from '@/audio/effects/reverb-hub';
 import { SelectedEngine } from './selected-engine';
@@ -53,10 +55,22 @@ async function build(): Promise<AppServices> {
   bindEngineToPatch(patchStore, engine);
   routeNotes(bus, () => engine);
   const { store: notesStore } = createNotesStore(bus);
+  // Transport: the store holds play/stop/loop state; the Sequencer schedules notes on the audio clock.
+  const transportStore = createTransportStore({ projectStore, bus });
+  const sequencer = new Sequencer({
+    context: host.context,
+    destination: host.input,
+    getProject: () => projectStore.getState().project,
+    getEngine: (id) => trackEngines.get(id),
+    isMetronomeOn: () => transportStore.getState().metronome,
+    bus,
+  });
+  transportStore.getState().attachDriver(sequencer);
 
   host.setMasterVolumeDb(appStore.getState().masterVolumeDb);
   appStore.subscribe((s, prev) => {
     if (s.masterVolumeDb !== prev.masterVolumeDb) host.setMasterVolumeDb(s.masterVolumeDb);
+    if (s.audio === 'off' && prev.audio !== 'off') transportStore.getState().stop(); // the clock is suspended
   });
 
   const helpStore = createHelpStore();
@@ -70,8 +84,8 @@ async function build(): Promise<AppServices> {
     appStore.getState().setAudio('on');
   };
 
-  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, tryThisStore, startAudio };
+  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, tryThisStore, startAudio };
   // Test hook (like the old synth-html `window.__daw`): e2e tests assert on state, not pixels.
-  (window as unknown as { __synth: unknown }).__synth = { ...services, trackEngines, mixer, vizStats: takeFrameStats };
+  (window as unknown as { __synth: unknown }).__synth = { ...services, trackEngines, mixer, sequencer, vizStats: takeFrameStats };
   return services;
 }
