@@ -36,15 +36,24 @@ Assumed device: a laptop with a physical keyboard, running a recent Chrome, Edge
 
 ## 2. Product structure
 
-The app is a single page with three stacked zones: the synth panel on top, the keyboard below it, and the composition tool at the bottom. A help drawer slides in from the right whenever a (?) is clicked, without hiding the controls it describes.
+The app is a single page that fits one laptop screen (1280×720 and up) without scrolling. The top bar and the on-screen keyboard are always visible. Below the top bar, the synth's controls are grouped into tabs, and the composition tool is one of those tabs. A help drawer slides in from the right whenever a (?) is clicked, without hiding the controls it describes.
 
 | Zone | Contents | Notes |
 | --- | --- | --- |
-| Top bar | App name, preset menu, master volume, audio on/off, tempo, help index | Audio starts on the first click (browser rule) |
-| Synth panel | Oscillators, mixer, filter, envelopes, LFO, voicing, effects, visualisers | Laid out left to right in signal-flow order |
-| Keyboard | On-screen keys, octave and velocity controls, held-note display | Mirrors laptop-keyboard input |
-| Composition | Track list, piano roll grid, transport | Collapsible to give the synth more room |
-| Help drawer | Content for the selected element | Opens beside, never over, the panel |
+| Top bar | App name, preset menu, master volume, audio on/off, tempo, help index | Always visible. Audio starts on the first click (browser rule) |
+| Tab bar | Sound, Shape, Modulation, Effects, Output, Composition | Switch tabs instead of scrolling; the selected tab is remembered per viewer |
+| Tab body | The controls of the selected tab, laid out left to right in signal-flow order | Fills the space between the tab bar and the keyboard. Only scrolls if one tab is taller than the screen |
+| Keyboard | On-screen keys, octave and velocity controls, held-note display | Pinned to the bottom of the screen; always visible, whichever tab is open |
+| Help drawer | Content for the selected element | Opens beside, never over, the controls. Selecting help for a control on another tab switches to its tab |
+
+Tab groups (v1 proposal; the grouping is a single list in the code and can change):
+
+- **Sound:** oscillators, mixer.
+- **Shape:** filter, filter envelope, amp envelope.
+- **Modulation:** LFO, voicing.
+- **Effects:** distortion, delay, reverb.
+- **Output:** master volume and the visualisers (oscilloscope, spectrum, meter).
+- **Composition:** track list, piano roll and transport (see section 6).
 
 ### Principles
 
@@ -53,6 +62,17 @@ The app is a single page with three stacked zones: the synth panel on top, the k
 - **Everything is explainable.** Every section title and every control has a (?) button. No control ships without help content.
 - **See what you hear.** Each section that shapes sound shows a small live plot of its effect.
 - **Safe to experiment.** Every control has a reset (double-click), presets can be restored, and a limiter on the master output protects ears and speakers.
+- **Fits one screen.** The keyboard and top bar never scroll away, and nothing scrolls on a normal laptop screen. Controls are reached by switching tabs, not by scrolling.
+- **Exact values on demand.** Every numeric readout can be clicked and typed into (with units, such as `2.5k` or `300 ms`). Dragging a knob to an exact value is slow, so typing is always available as well. Typed values are clamped and snapped to the control's range and step.
+
+### 2.1 Visual design
+
+The look is a deliberate step up from a plain form: it should feel like an instrument, and it should show which signals are related.
+
+- Three themes ship: a dark graphite default, a warm light theme with walnut and aluminium tones, and a high-contrast theme in the style of green-on-dark displays. The user chooses one in the top bar.
+- Each signal type has its own accent colour (audio path, modulation, effects, keyboard), so sections stay distinguishable in every theme.
+- The themes are informed by the look of hardware and software synths (for example, the contrast of a green panel on a dark body, and the wood and aluminium of a small analogue-style panel), but they copy no specific product's trade dress or artwork.
+- Every theme meets WCAG 2.2 AA contrast for text and controls.
 
 ## 3. Synth engine
 
@@ -165,6 +185,7 @@ Every section and control has a small (?) button that opens a help entry in the 
 - Glossary terms (harmonic, Hz, cents, Q) are underlined; hovering shows a one-line definition.
 - A **Help index** in the top bar lists every entry in signal-flow order, so the help also works as a course outline.
 - Keyboard access: `?` opens help for the focused control, `Esc` closes the drawer. Note that while the keyboard player is active, `?` must not be mapped to a note.
+- A help link or `?` for a control on another tab switches to that tab, so the highlighted control is visible.
 
 ### 4.2 Help entry template
 
@@ -233,6 +254,7 @@ The manuals overlap by an octave (C4 to E4), so either hand position can play th
 - Ignore key auto-repeat; a held key is one note.
 - Notes play only when focus is not in a text field; a small indicator shows when the keyboard is "live".
 - An on-screen 61-key keyboard (scrollable to 88) mirrors input: pressed keys light up, keys are labelled with their laptop key, and mouse or touch can play them.
+- The on-screen keyboard stays pinned to the bottom of the screen whichever tab is open, so it is always visible and playable.
 - Played note names (for example C4, F#3) display above the keyboard, which supports the help content on pitch.
 - Help entry explains that laptops can only register a few keys at once (key ghosting), so some chords will not sound.
 - Recording: when a track is armed in the composition tool, keyboard input is recorded into it (section 6).
@@ -240,7 +262,7 @@ The manuals overlap by an octave (C4 to E4), so either hand position can play th
 
 ## 6. Composition tool
 
-The composition tool is a small multi-track sequencer: each track has its own synth patch, and notes are drawn on a piano-roll grid with any length the grid allows. Selecting a track loads its patch into the synth panel, so learners can shape the sound of a bass line while it loops.
+The composition tool is a small multi-track sequencer: each track has its own synth patch, and notes are drawn on a piano-roll grid with any length the grid allows. Selecting a track loads its patch into the synth panel, so learners can shape the sound of a bass line while it loops. It lives in its own **Composition** tab, so the synth's other controls and the keyboard stay on screen while you work on the arrangement.
 
 ### 6.1 Project
 
@@ -330,7 +352,8 @@ Synth Lab is a static web app written in TypeScript on the Web Audio API, which 
 | Browsers | Latest two versions of Chrome, Edge, Safari and Firefox |
 | Load | Under 2 MB transferred and under 3 s to interactive on broadband |
 | Hearing safety | Output limiter always on; starts at −12 dB master volume |
-| Accessibility | Every control usable by keyboard, labelled for screen readers with its value; WCAG 2.2 AA contrast; animation respects reduced-motion settings |
+| Layout | At 1280×720 and 1280×800, no page scrolling on any tab; the keyboard is always fully visible |
+| Accessibility | Every control usable by keyboard, labelled for screen readers with its value; tabs follow the WAI-ARIA tabs pattern; numeric readouts can be edited by keyboard; WCAG 2.2 AA contrast; animation respects reduced-motion settings |
 | Privacy | No accounts; projects and presets stored locally; no third-party tracking |
 
 ## 8. Delivery
@@ -363,3 +386,5 @@ Measured in moderated sessions with 8–10 beginners, plus optional, anonymous, 
 - [ ] Should a chorus effect join v1, given how central it is to classic polysynth sounds?
 - [ ] Who writes and who technically reviews the help content?
 - [ ] Free and open source, or a paid product? This affects hosting, analytics and content licensing.
+- [ ] Confirm the tab grouping in section 2 (which sections share a tab, and whether Output or Composition should come first).
+- [ ] Which of the three visual themes is the default for the first release?
