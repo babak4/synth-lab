@@ -59,8 +59,12 @@ export function useCanvas(draw: (a: DrawArgs) => void) {
       const dpr = window.devicePixelRatio || 1;
       width = canvas.clientWidth;
       height = canvas.clientHeight;
-      canvas.width = Math.max(1, Math.round(width * dpr));
-      canvas.height = Math.max(1, Math.round(height * dpr));
+      const w = Math.max(1, Math.round(width * dpr));
+      const h = Math.max(1, Math.round(height * dpr));
+      // Assigning width or height clears the bitmap even when the value is the same, so only do it on a real change
+      // (the observer's first callback would otherwise wipe a frame that a draw-on-change canvas will not repaint).
+      if (canvas.width !== w) canvas.width = w;
+      if (canvas.height !== h) canvas.height = h;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
