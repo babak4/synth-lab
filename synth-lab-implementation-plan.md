@@ -600,11 +600,13 @@ The current look is functional but plain. These tasks restyle the app with the c
 Not sampled: text colours. Serum shows near-white text on the dark panels and dark text on the slate strips; pick exact values in T7.1 so every pairing passes AA.
 
 #### T7.1 Serum-based theme tokens
-- **Deliverables:** replace the colour tokens in `src/ui/theme/theme.css` with the palette above, mapped role by role (the "Use in Synth Lab" column). One dark theme, used whatever the OS setting is; the current light theme and the `prefers-color-scheme` and `data-theme` switching are removed.
+- **Deliverables:** replace the dark theme's colour tokens in `src/ui/theme/theme.css` with the palette above, mapped role by role (the "Use in Synth Lab" column).
+- **Keep the light theme.** Re-map it to the same roles: Serum's accents on a light background (for example a pale grey page, white panels, slate-tinted control strips), darkening each accent where needed so it passes AA on white.
+- Theme selection: follow the OS (`prefers-color-scheme`) by default, as today; add a System / Light / Dark setting in the top bar (a `Select` from the control kit, with a help entry) that sets `data-theme`. The choice is remembered per viewer in `localStorage`.
 - Accent per role, as in Serum: green for sources, cyan for filter and modulation, deep blue for selection, yellow for position, purple for recording.
-- Add the new pairings to the WCAG 2.2 AA tests in `theme.test.ts`: text on each background, dark text on slate, white text on deep blue, accents on the display background, the focus ring on every background.
+- Add the new pairings to the WCAG 2.2 AA tests in `theme.test.ts`, for both themes: text on each background, dark text on slate, white text on deep blue, accents on the display background, the focus ring on every background.
 - Only colours are adopted: no Serum logo, wordmark, artwork or bitmap control graphics.
-- **Acceptance:** all contrast tests pass; the canvases (scope, spectrum, plots, diagrams) read their colours from the new tokens; a screenshot of each tab is saved in `docs/`, with a link to the Serum reference (do not copy Xfer's image into the repo).
+- **Acceptance:** all contrast tests pass for both themes; the System / Light / Dark setting is keyboard-operable and survives a reload; the canvases (scope, spectrum, plots, diagrams) read their colours from the new tokens and redraw when the theme changes; a screenshot of each tab is saved in `docs/`, with a link to the Serum reference (do not copy Xfer's image into the repo).
 - **Complexity:** S
 - **Model:** Sonnet 5.5, medium effort
 
@@ -615,8 +617,8 @@ Not sampled: text colours. Serum shows near-white text on the dark panels and da
 - **Model:** Sonnet 5.5, medium effort
 
 #### T7.3 Visual review against the reference
-- **Deliverables:** compare every tab, the help drawer and the output strip with the Serum reference screenshot; list and fix colour mismatches and contrast problems; record before/after screenshots in `docs/`.
-- **Acceptance:** a human reviews the result on a real screen at 1280 px and signs it off.
+- **Deliverables:** compare every tab, the help drawer and the output strip with the Serum reference screenshot (dark theme), and check that the light theme keeps the same role colours; list and fix colour mismatches and contrast problems; record before/after screenshots of both themes in `docs/`.
+- **Acceptance:** a human reviews both themes on a real screen at 1280 px and signs them off.
 - **Complexity:** S
 - **Model:** Haiku 5.5, low effort
 

@@ -71,9 +71,9 @@ The look is a deliberate step up from a plain form: it should feel like an instr
 
 - **The colour theme follows Xfer Records' Serum 2** (default skin): near-black panels, slate-grey control strips, dark teal displays, and bright accents that each mean one thing. The palette, sampled from Xfer's own product screenshots, is in the implementation plan (Phase 7).
 - One accent colour per role, as in Serum: green for sound sources, cyan for the filter, envelopes, LFO and other modulation, deep blue for the selected tab or item, yellow for the current position (a playhead, the wavetable frame), purple for the arpeggiator and recording.
-- It is a single dark theme, used whether the operating system is set to light or dark. The current light theme is retired.
+- The Serum-based dark theme is the main look. A light theme stays available, using the same roles and accents, adjusted for a light background. By default the app follows the operating system's light or dark setting, and a setting in the top bar can choose light or dark instead.
 - Only the colours are adopted. Serum's logo, wordmark, artwork and control graphics are not copied.
-- The theme meets WCAG 2.2 AA contrast for text and controls.
+- Both themes meet WCAG 2.2 AA contrast for text and controls.
 
 Source: [Xfer Records: Serum 2](https://www.xferrecords.com/products/serum-2).
 
@@ -391,4 +391,4 @@ Measured in moderated sessions with 8–10 beginners, plus optional, anonymous, 
 - [ ] Free and open source, or a paid product? This affects hosting, analytics and content licensing.
 - [ ] Confirm the tab grouping in section 2 (which sections share a tab).
 - [x] Scope and spectrum stay visible on every tab (resolved: the always-visible output strip in section 2).
-- [x] Colour theme (resolved: Serum 2's palette, section 2.1).
+- [x] Colour theme (resolved: Serum 2's palette for the dark theme, with the light theme kept as an option; section 2.1).
