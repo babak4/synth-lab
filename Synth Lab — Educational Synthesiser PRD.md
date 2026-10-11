@@ -274,12 +274,14 @@ The composition tool is a small multi-track sequencer: each track has its own sy
 | Tempo | 40 to 240 BPM | 120 |
 | Time signature | 3/4, 4/4, 6/8 | 4/4 |
 | Length | 1 to 64 bars | 8 |
-| Loop region | Any bar range within the length | Whole project |
+| Loop region | Any bar range within the length | Whole project; it follows the length while it covers the whole song |
 
 ### 6.2 Tracks
 
 - Up to 8 tracks. Each track is an independent synth instance with its own preset.
-- Track header: name, colour, preset selector, volume, mute, solo, record arm, and "edit sound" (focuses the synth panel on this track).
+- Track header: name, colour, volume (a typed value works, as on every control), mute, solo, move up and down, duplicate and delete. Selecting a track is "edit sound": the synth panel shows that track's patch, and the other tracks' sounds are untouched. Record arm arrives with recording (section 6.4). The preset menu in the top bar loads a preset into the selected track.
+- Mute beats solo: a muted track is silent even if soloed. A fader at −60 dB or lower is silence. Muting a track also stops it feeding the shared reverb.
+- A project always keeps at least one track.
 - The track list shows a miniature of each track's notes along a shared timeline, so the whole arrangement is visible at once.
 - Add, duplicate, reorder (drag) and delete tracks.
 
@@ -295,19 +297,22 @@ The piano roll edits the selected track: pitch on the vertical axis (a piano alo
 - **Audition:** clicking a piano key on the left plays that pitch; placing a note plays it briefly.
 - **Ghost notes:** other tracks' notes can be shown faintly, to help line up parts.
 - **Zoom:** horizontal and vertical, plus "fit to notes".
-- **Undo/redo** for all edits (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z).
+- **Overlaps:** two notes of one pitch never overlap. The edited note wins and the others give way: a note that starts before it is cut short, a note inside it is removed, a note that starts inside it moves its start to the edited note's end. One undo restores them all. No edit can make a zero-length note or one outside the song.
+- **Keyboard only:** with the grid focused, arrow keys move a cursor or the selection, Enter adds a note, and every change is announced to screen readers.
+- **Undo/redo** for all edits, sound and notes together in the order they happened (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z). A drag, resize or box select is one step. Undo selects the track the step belongs to, so the change is visible. Opening, creating or restoring a project starts a fresh history.
 
 ### 6.4 Transport and recording
 
-- Play/stop (Space), return to start (Home), loop toggle, a moving playhead that follows playback.
-- Metronome on/off with a one-bar count-in for recording.
+- Play/stop (Space), return to start (Home), loop toggle, a moving playhead that follows playback. Space and Home do nothing while a button, slider, tab or text field has focus.
+- Playback: a note sounds only from its own start (starting in the middle of a note, or looping to a point inside one, does not play that note). With the loop on, a playhead before the loop plays on to the loop end and wraps. With the loop off, playback stops at the end of the song and rewinds. Editing the notes, tempo or loop while playing takes effect within the next 100 ms with no stuck notes. Turning audio off stops playback.
+- Metronome on/off (accented downbeat; in 6/8 it clicks the two dotted-quarter pulses) and a one-bar count-in that clicks even when the metronome is off.
 - Recording from the laptop keyboard into the armed track, with optional quantise on input (off, 1/8, 1/16).
 - Notes play at sample-accurate times regardless of UI load (section 7).
 
 ### 6.5 Saving
 
-- Autosave the current project to browser storage; restore it on reload.
-- Save, open and export projects as JSON files, including each track's patch.
+- Autosave the current project to browser storage (shortly after each change, and when the page is hidden); restore it on reload. A stored project that cannot be read is kept as a backup copy, a fresh project opens, and a message says so.
+- Save, open and export projects as `.synthlab.json` files, including each track's patch. A file that cannot be opened is explained in plain words (not a project, newer version, which fields are wrong). Starting a new project asks first when there are changes not saved to a file.
 - Export to WAV via offline rendering is a v1.1 goal; MIDI file export is v2.
 
 ## 7. Technical approach
@@ -389,6 +394,9 @@ Measured in moderated sessions with 8–10 beginners, plus optional, anonymous, 
 - [ ] Should a chorus effect join v1, given how central it is to classic polysynth sounds?
 - [ ] Who writes and who technically reviews the help content?
 - [ ] Free and open source, or a paid product? This affects hosting, analytics and content licensing.
-- [ ] Confirm the tab grouping in section 2 (which sections share a tab).
+- [ ] Confirm the tab grouping in section 2 (which sections share a tab). It is built as proposed and can change in one list.
+- [x] Same-pitch overlaps in the piano roll (resolved: trim, last edit wins; section 6.3).
+- [x] Undo across tracks (resolved: one stack for sounds and notes, steps tagged by track; section 6.3).
+- [ ] Should autosave count as "saved" when starting a new project, or only a file save? (Currently only a file save.)
 - [x] Scope and spectrum stay visible on every tab (resolved: the always-visible output strip in section 2).
 - [x] Colour theme (resolved: Serum 2's palette for the dark theme, with the light theme kept as an option; section 2.1).

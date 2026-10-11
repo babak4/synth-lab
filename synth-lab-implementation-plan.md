@@ -146,21 +146,23 @@ Phase 6  T6.1–T6.4 after phases 2–5
 
 ## 4a. Remaining work — priorities, models and parallel waves
 
-**Done:** phases 0–4 (T0.1 to T4.5), all implemented with Claude Sonnet 5.5. T4.6 has an author self-review only (`docs/content-review.md`).
+**Done:** phases 0–4 (T0.1 to T4.5), waves 1 and 2 (T2.6, T2.7, T5.1, T5.4, T5.2, T5.3a, T5.6, T5.7) and T5.3b from wave 3, all implemented with Claude Sonnet 5.5 (T5.7 with Haiku 5.5). T5.2 and T5.3b had their fresh-context ★ reviews, and every confirmed finding was fixed before merge. The ★ reviews of T2.6 and T2.7 are still open. T4.6 has an author self-review only (`docs/content-review.md`).
+
+**Next:** T5.5 (recording), then wave 4 (T5.3c, T4.7). Delivered tasks are marked ✔ in the first column below.
 
 **How to read this:** if one agent is working, follow the priority numbers. With several agents, run each wave's tasks in parallel, each on its own branch or worktree (rule 1.2.3), and merge in priority order.
 
-| Priority | Wave | Task | Model | Effort | Depends on | Runs in parallel with |
+| Priority (✔ = done) | Wave | Task | Model | Effort | Depends on | Runs in parallel with |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 1 | T2.6 ★ Editable numeric readouts | Sonnet 5.5 | medium | done tasks only | T2.7, T5.1, T5.4 |
-| 2 | 1 | T2.7 ★ Fixed-viewport tabbed layout | Sonnet 5.5 | high | done tasks only; merge after T2.6 | T2.6, T5.1, T5.4 |
-| 3 | 1 | T5.1 Project state and multi-track audio | Sonnet 5.5 | high | done tasks only | T2.6, T2.7, T5.4 |
-| 4 | 1 | T5.4 Undo/redo (command stack) | Sonnet 5.5 | medium | done tasks only | T2.6, T2.7, T5.1 |
-| 5 | 2 | T5.2 ★ Sequencer scheduler and transport | Sonnet 5.5 | high | T5.1 | T5.3a, T5.6, T5.7 |
-| 6 | 2 | T5.3a Piano roll rendering | Sonnet 5.5 | high | T2.7 (Composition tab) | T5.2, T5.6, T5.7 |
-| 7 | 2 | T5.6 Track list and arrangement overview | Sonnet 5.5 | medium | T5.1, T2.7 | T5.2, T5.3a, T5.7 |
-| 8 | 2 | T5.7 Persistence | Haiku 5.5 | medium | T5.1 | T5.2, T5.3a, T5.6 |
-| 9 | 3 | T5.3b ★ Piano roll editing | Sonnet 5.5 | high | T5.3a, T5.4 | T5.5 |
+| ✔ 1 | 1 | T2.6 ★ Editable numeric readouts | Sonnet 5.5 | medium | done tasks only | T2.7, T5.1, T5.4 |
+| ✔ 2 | 1 | T2.7 ★ Fixed-viewport tabbed layout | Sonnet 5.5 | high | done tasks only; merge after T2.6 | T2.6, T5.1, T5.4 |
+| ✔ 3 | 1 | T5.1 Project state and multi-track audio | Sonnet 5.5 | high | done tasks only | T2.6, T2.7, T5.4 |
+| ✔ 4 | 1 | T5.4 Undo/redo (command stack) | Sonnet 5.5 | medium | done tasks only | T2.6, T2.7, T5.1 |
+| ✔ 5 | 2 | T5.2 ★ Sequencer scheduler and transport | Sonnet 5.5 | high | T5.1 | T5.3a, T5.6, T5.7 |
+| ✔ 6 | 2 | T5.3a Piano roll rendering | Sonnet 5.5 | high | T2.7 (Composition tab) | T5.2, T5.6, T5.7 |
+| ✔ 7 | 2 | T5.6 Track list and arrangement overview | Sonnet 5.5 | medium | T5.1, T2.7 | T5.2, T5.3a, T5.7 |
+| ✔ 8 | 2 | T5.7 Persistence | Haiku 5.5 | medium | T5.1 | T5.2, T5.3a, T5.6 |
+| ✔ 9 | 3 | T5.3b ★ Piano roll editing | Sonnet 5.5 | high | T5.3a, T5.4 | T5.5 |
 | 10 | 3 | T5.5 Recording from the keyboard | Sonnet 5.5 | high | T5.2 | T5.3b |
 | 11 | 4 | T5.3c Velocity lane | Haiku 5.5 | medium | T5.3b | T4.7 |
 | 12 | 4 | T4.7 Help content update for the new layout and the composition tool | Sonnet 5.5 | medium | T2.6, T2.7, T5.3b, T5.5 | T5.3c |
@@ -358,6 +360,7 @@ Notes:
   - axe passes with an editor open.
 - **Complexity:** S
 - **Model:** Sonnet 5.5, medium effort
+- **As built (done; ★ review open):** `parseValue` in `src/core/params/parse.ts` (units, `k`, `%`, `ms`, `-inf`, clamping with a message); `NumericReadout` on every knob and slider; Enter on a focused control opens the editor (Safari does not Tab to buttons).
 
 #### T2.7 Fixed-viewport tabbed layout ★ (priority 2)
 - **Why:** the synth panel is now taller than a laptop screen, so the on-screen keyboard and the bottom zones scroll out of view. Players need the keyboard visible at all times, and they should not have to scroll to reach other controls.
@@ -388,6 +391,7 @@ Notes:
   - Opening help for a control on another tab selects that tab and highlights the control.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, high effort (layout and keyboard focus are easy to get subtly wrong)
+- **As built (done; ★ review open):** tab list in `src/core/tabs.ts`, selection in `src/state/tab-store.ts` (localStorage with try/catch). Only the selected tab is mounted, so hidden tabs draw nothing. Help links switch tabs through `tabForHelpId`. The keyboard and the output strip are pinned in the app footer; with the drawer open the tab body narrows and the footer stays full width. e2e specs that touch a control open its tab first (`tests/e2e/tabs.ts`).
 
 ---
 
@@ -483,6 +487,7 @@ Notes:
 - **Acceptance:** switching selected track swaps the panel's patch without affecting sound of other tracks; deleting a playing track leaves no hanging nodes.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, high effort
+- **As built (done):** `src/state/project-store.ts` (tempo now lives here, not in the app store), pure edits in `src/core/project-ops.ts` (a project always keeps one track), gains in `src/core/mixing.ts` (mute beats solo; −60 dB is silence), `WebTrackMixer` in `src/audio/track-mixer.ts`, `TrackEngines` and `SelectedEngine` in `src/app/`. `bindPatchToProject` makes the editor patch the selected track's patch. One `ReverbHub` per project.
 
 #### T5.2 Sequencer scheduler and transport ★
 - **PRD:** §6.4, §7.3, §7.4 (timing)
@@ -491,6 +496,7 @@ Notes:
 - **Acceptance:** offline test: 16 bars of 1/16 notes at 120 BPM start within 1 ms of target; 30 minutes of looping shows no drift; no double-triggered or missed notes at loop boundary; edits during playback never cause stuck notes.
 - **Complexity:** L
 - **Model:** Sonnet 5.5, high effort (★: fresh-context Sonnet review before merge)
+- **As built (done; ★ reviewed, findings fixed):** pure `SequencerPlan` and tick/seconds maths in `src/core/`, lookahead `Sequencer` in `src/audio/` with a Worker timer (25 ms tick, 100 ms ahead), metronome, count-in, `transport-store`, top-bar transport controls, Space and Home shortcuts. Behaviour: no chasing (a note plays only from its own start); a playhead before the loop plays to the loop end then wraps; past the loop end it plays to the song end; shrinking the loop under the playhead wraps at once; with the loop off, playback stops at the song end and rewinds. Engine fix: Chromium honours source start times only to a 128-frame quantum, so basic oscillators start at `min(time, currentTime)` and automation places the note (the pulse gate keeps its exact start). See `docs/performance.md`.
 
 #### T5.3 Piano roll editor
 Split into three tasks so the hardest part is isolated.
@@ -501,6 +507,7 @@ Split into three tasks so the hardest part is isolated.
 - **Deliverables:** Canvas grid with bars/beats/subdivision lines; piano key column (click to audition); notes coloured by velocity; horizontal/vertical zoom and scroll; "fit to notes"; playhead; ghost notes from other tracks; virtualised drawing for 5,000+ notes at 60 fps; device-pixel-ratio aware.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, high effort
+- **As built (done):** pure geometry in `src/core/piano-roll/`, view store `src/state/piano-roll-view.ts`, one canvas drawn through the shared frame loop. Wheel, Ctrl-wheel and Alt-wheel zoom, fit to notes, ghost notes, loop shading, playhead, audition from the piano column.
 
 **T5.3b Editing interactions ★**
 - **Depends on:** T5.3a, T5.4
@@ -508,6 +515,7 @@ Split into three tasks so the hardest part is isolated.
 - **Acceptance:** Playwright tests for each interaction; overlapping same-pitch notes are prevented or trimmed (decide and document); no edit can produce a negative or zero-length note.
 - **Complexity:** XL
 - **Model:** Sonnet 5.5, high effort (★: fresh-context Sonnet review before merge)
+- **As built (done; ★ reviewed, findings fixed):** decisions in `docs/piano-roll-editing.md`. Same-pitch overlaps are trimmed, last edit wins, through one function. One unified undo stack over the project (`History<Project>`), steps tagged by track, a gesture is one step, note steps are diffs by note id. Keyboard-only editing with a polite status region. The T5.5 recorder must write notes through `history.execute`.
 
 **T5.3c Velocity lane**
 - **Depends on:** T5.3b
@@ -522,6 +530,7 @@ Split into three tasks so the hardest part is isolated.
 - **Acceptance:** property test: random edit sequence then full undo returns to the initial state exactly.
 - **Complexity:** M
 - **Model:** Sonnet 5.5, medium effort
+- **As built (done):** generic `History` in `src/core/history.ts` (coalescing, groups, `removeWhere`), `history-store`, top-bar Undo and Redo, Ctrl/Cmd+Z. Widened by T5.3b to cover note edits.
 
 #### T5.5 Recording from the keyboard
 - **PRD:** §6.4
@@ -537,6 +546,7 @@ Split into three tasks so the hardest part is isolated.
 - **Deliverables:** track headers (name, colour, preset selector, volume, mute, solo, arm, edit sound); miniature note view per track along a shared timeline; drag to reorder; shown in the Composition tab (T2.7).
 - **Complexity:** M
 - **Model:** Sonnet 5.5, medium effort
+- **As built (done):** `CompositionTab` with track rows (colour, name, fader with typed values, mute, solo, move, duplicate, delete) and an arrangement overview lane per track. Not built: drag reordering, per-track preset selector and record arm (arm arrives with T5.5; selecting a track is "edit sound"). The overview has no playhead yet.
 
 #### T5.7 Persistence
 - **PRD:** §6.5
@@ -545,6 +555,7 @@ Split into three tasks so the hardest part is isolated.
 - **Acceptance:** reload restores identical state; importing an invalid file shows a clear error and changes nothing.
 - **Complexity:** S
 - **Model:** Haiku 5.5, medium effort
+- **As built (done):** `.synthlab.json` file format and friendly errors in `src/core/project-file.ts`, debounced autosave (500 ms, 5 s max wait, flush on page hide) in `src/state/persistence.ts`, a corrupt stored project is copied to `project:backup` and replaced with a fresh one with a notice, Project menu in the top bar. "Unsaved" means different from the last file save. No UI yet to recover `project:backup`.
 
 ---
 
@@ -657,11 +668,11 @@ Not sampled: text colours. Serum shows near-white text on the dark panels and da
 | T2.7 ★ | Fixed-viewport tabbed layout | M | done (★ review open) | Sonnet 5.5 | high | 1 |
 | T5.1 | Project state and multi-track audio | M | done | Sonnet 5.5 | high | 1 |
 | T5.4 | Undo/redo | M | done | Sonnet 5.5 | medium | 1 |
-| T5.2 ★ | Sequencer scheduler and transport | L | done (review pending) | Sonnet 5.5 | high | 2 |
-| T5.3a | Piano roll rendering | M | to do | Sonnet 5.5 | high | 2 |
-| T5.6 | Track list | M | to do | Sonnet 5.5 | medium | 2 |
-| T5.7 | Persistence | S | to do | Haiku 5.5 | medium | 2 |
-| T5.3b ★ | Piano roll editing | XL | to do | Sonnet 5.5 | high | 3 |
+| T5.2 ★ | Sequencer scheduler and transport | L | done (★ reviewed, findings fixed) | Sonnet 5.5 | high | 2 |
+| T5.3a | Piano roll rendering | M | done | Sonnet 5.5 | high | 2 |
+| T5.6 | Track list | M | done | Sonnet 5.5 | medium | 2 |
+| T5.7 | Persistence | S | done | Haiku 5.5 | medium | 2 |
+| T5.3b ★ | Piano roll editing | XL | done (★ reviewed, findings fixed) | Sonnet 5.5 | high | 3 |
 | T5.5 | Recording | L | to do | Sonnet 5.5 | high | 3 |
 | T5.3c | Velocity lane | S | to do | Haiku 5.5 | medium | 4 |
 | T4.7 | Help content update | S | to do | Sonnet 5.5 | medium | 4 |
@@ -676,7 +687,7 @@ Not sampled: text colours. Serum shows near-white text on the dark panels and da
 
 ★ = needs a fresh-context review by a Sonnet 5.5 reviewer (high effort) before merge.
 
-Remaining work: 20 items, 16 on Sonnet 5.5 and 4 on Haiku 5.5. No task uses Claude Opus.
+Remaining work: 11 items (T5.5, T5.3c, T4.7, T6.1–T6.4, T7.1–T7.3, T4.6), 8 on Sonnet 5.5 and 3 on Haiku 5.5, plus the open ★ reviews of T2.6 and T2.7. No task uses Claude Opus.
 
 ---
 
