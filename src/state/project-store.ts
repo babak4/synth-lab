@@ -22,6 +22,8 @@ export const MAX_LENGTH_BARS = 64;
 export interface ProjectState {
   project: Project;
   selectedTrackId: string;
+  /** Bumped every time the whole document is replaced (open / new / restore); undo history ends there. */
+  loadGeneration: number;
   setTempo(bpm: number): void;
   setTimeSignature(sig: TimeSignature): void;
   setLengthBars(bars: number): void;
@@ -55,6 +57,7 @@ export function createProjectStore(initial: Project = createProject()): ProjectS
     return {
       project: initial,
       selectedTrackId: initial.tracks[0]!.id,
+      loadGeneration: 0,
       setTempo: (bpm) => {
         const tempo = Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, Math.round(bpm) || TEMPO_MIN));
         if (tempo !== get().project.tempo) apply({ ...get().project, tempo });
@@ -106,7 +109,7 @@ export function createProjectStore(initial: Project = createProject()): ProjectS
         const trimmed = name.trim().slice(0, 40);
         if (trimmed) apply(ops.updateTrack(get().project, id, { name: trimmed }));
       },
-      loadProject: (project) => set({ project, selectedTrackId: project.tracks[0]!.id }),
+      loadProject: (project) => set({ project, selectedTrackId: project.tracks[0]!.id, loadGeneration: get().loadGeneration + 1 }),
     };
   });
 }
@@ -115,8 +118,8 @@ export function createProjectStore(initial: Project = createProject()): ProjectS
  * "Edit sound": the patch store is the selected track's patch. Edits flow into the project; selecting
  * another track loads that track's patch into the editor. Returns an unsubscribe function.
  *
- * `onTrackSwitch` runs after a different track's patch has been loaded (the runtime clears undo
- * history there, since a patch change recorded for one track must not be replayed onto another).
+ * `onTrackSwitch` runs after a different track's patch has been loaded. (The undo history no longer
+ * needs it: its entries are tagged with the track they belong to, so they survive a track switch.)
  */
 export function bindPatchToProject(patchStore: PatchStore, projectStore: ProjectStore, onTrackSwitch?: () => void): () => void {
   let syncing = false;

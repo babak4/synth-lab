@@ -5,12 +5,17 @@
  *
  * Set up applies B. A/B swaps between them (keeping any edits made to the side being left). Undo puts
  * back exactly A. Demo notes never overlap or stick: a new one first ends the previous.
+ *
+ * The A and B slots are patches of ONE track. When another track is selected (`projectStore` given) the
+ * experiment simply ends: A/B and Undo would otherwise load the first track's patch into the new track's
+ * editor. The change itself stays undoable with the app's own undo, which is tagged with its track.
  */
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { EventBus, EventMap } from '@/core/contracts/events';
 import type { Patch } from '@/core/contracts/patch';
 import type { TryThis } from '@/content/schema';
 import type { PatchStore } from './patch-store';
+import type { ProjectStore } from './project-store';
 
 export const DEMO_NOTE_SECONDS = 1.4;
 
@@ -28,6 +33,8 @@ export type TryThisStore = StoreApi<TryThisState>;
 
 export function createTryThisStore(deps: {
   patchStore: PatchStore;
+  /** When given, selecting another track ends the experiment. */
+  projectStore?: ProjectStore;
   bus: EventBus<EventMap>;
   now(): number;
   /** Timer functions, injectable for tests. */
@@ -55,43 +62,51 @@ export function createTryThisStore(deps: {
     sounding = { pitch, timer: setTimer(() => stopNote(), DEMO_NOTE_SECONDS * 1000) };
   };
 
-  return createStore<TryThisState>()((set, get) => ({
-    active: null,
-    showing: 'B',
-
-    setUp(entryId, index, t) {
+  return createStore<TryThisState>()((set, get) => {
+    deps.projectStore?.subscribe((state, prev) => {
+      if (state.selectedTrackId === prev.selectedTrackId || !slots) return;
       stopNote();
-      const before = structuredClone(patchStore.getState().patch);
-      // Setting up a second experiment starts from the learner's real patch, not the previous demo.
-      const base = slots ? slots.A : before;
-      const after: Patch = { ...structuredClone(base), params: { ...base.params, ...(t.patch as Partial<Patch['params']>) } };
-      slots = { A: structuredClone(base), B: after };
-      note = t.note;
-      patchStore.getState().loadPatch(after);
-      set({ active: `${entryId}#${index}`, showing: 'B' });
-      playNote();
-    },
-
-    toggle() {
-      if (!slots) return;
-      const showing = get().showing;
-      slots[showing] = structuredClone(patchStore.getState().patch); // keep edits made on the side we leave
-      const next = showing === 'A' ? 'B' : 'A';
-      patchStore.getState().loadPatch(slots[next]);
-      set({ showing: next });
-      playNote();
-    },
-
-    undo() {
-      stopNote();
-      if (!slots) return;
-      patchStore.getState().loadPatch(slots.A);
       slots = null;
       set({ active: null, showing: 'B' });
-    },
+    });
+    return {
+      active: null,
+      showing: 'B',
 
-    play() {
-      playNote();
-    },
-  }));
+      setUp(entryId, index, t) {
+        stopNote();
+        const before = structuredClone(patchStore.getState().patch);
+        // Setting up a second experiment starts from the learner's real patch, not the previous demo.
+        const base = slots ? slots.A : before;
+        const after: Patch = { ...structuredClone(base), params: { ...base.params, ...(t.patch as Partial<Patch['params']>) } };
+        slots = { A: structuredClone(base), B: after };
+        note = t.note;
+        patchStore.getState().loadPatch(after);
+        set({ active: `${entryId}#${index}`, showing: 'B' });
+        playNote();
+      },
+
+      toggle() {
+        if (!slots) return;
+        const showing = get().showing;
+        slots[showing] = structuredClone(patchStore.getState().patch); // keep edits made on the side we leave
+        const next = showing === 'A' ? 'B' : 'A';
+        patchStore.getState().loadPatch(slots[next]);
+        set({ showing: next });
+        playNote();
+      },
+
+      undo() {
+        stopNote();
+        if (!slots) return;
+        patchStore.getState().loadPatch(slots.A);
+        slots = null;
+        set({ active: null, showing: 'B' });
+      },
+
+      play() {
+        playNote();
+      },
+  };
+  });
 }

@@ -70,3 +70,35 @@ export function useAudition(getViewport: () => Viewport) {
     onLostPointerCapture: (e: PointerEvent<HTMLElement>) => end(e.pointerId),
   };
 }
+
+/** How long a placed or transposed note sounds. */
+export const PREVIEW_MS = 220;
+
+/**
+ * A short preview of a pitch, for when a note is placed or its pitch changes (plan T5.3b). Same route as
+ * pressing a piano key: note events on the bus with source "audition". A new preview ends the last one.
+ */
+export function usePitchPreview(): (pitch: number) => void {
+  const { bus, host, appStore, startAudio } = useServices();
+  const current = useRef<{ pitch: number; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  const stop = useCallback(() => {
+    const c = current.current;
+    if (!c) return;
+    clearTimeout(c.timer);
+    current.current = null;
+    bus.emit('note:off', { pitch: c.pitch, source: 'audition', audioTime: host.currentTime });
+  }, [bus, host]);
+
+  useEffect(() => stop, [stop]);
+
+  return useCallback(
+    (pitch: number) => {
+      stop();
+      if (appStore.getState().audio === 'off') void startAudio(); // placing a note is a user gesture
+      bus.emit('note:on', { pitch, velocity: appStore.getState().kbdVelocity, source: 'audition', audioTime: host.currentTime });
+      current.current = { pitch, timer: setTimeout(stop, PREVIEW_MS) };
+    },
+    [bus, host, appStore, startAudio, stop],
+  );
+}

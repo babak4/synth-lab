@@ -169,6 +169,21 @@ describe('octave and velocity (PRD §5.2)', () => {
   });
 });
 
+describe('Shift sustain is off inside the piano roll', () => {
+  it('Shift on a region marked data-no-shift-sustain is not a sustain pedal; anywhere else it still is', () => {
+    const roll = document.createElement('div');
+    roll.setAttribute('data-no-shift-sustain', '');
+    roll.tabIndex = 0;
+    document.body.append(roll);
+    press('ShiftLeft', undefined, roll);
+    release('ShiftLeft', undefined, roll);
+    expect(log).toEqual([]);
+    press('ShiftLeft');
+    release('ShiftLeft');
+    expect(log).toEqual([{ type: 'sustain', down: true }, { type: 'sustain', down: false }]);
+  });
+});
+
 describe('sustain and panic', () => {
   it('Shift is a sustain pedal, held while either Shift is down', () => {
     press('ShiftLeft');

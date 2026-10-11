@@ -12,6 +12,8 @@ import { bindPatchToProject, createProjectStore } from '@/state/project-store';
 import { createTransportStore } from '@/state/transport-store';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
+import { createPianoRollEditStore } from '@/state/piano-roll-edit';
+import { pianoRollView } from '@/state/piano-roll-view';
 import { createMemoryStorage } from '@/state/storage';
 import { createProjectFileStore } from '@/state/project-file-store';
 import { createProjectPersistence } from '@/state/persistence';
@@ -30,7 +32,7 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
   const presetStore = createPresetStore({ patchStore, storage });
   void presetStore.getState().init();
   // Bound before the history store exists so loading the first track's patch is not an undo step.
-  bindPatchToProject(patchStore, projectStore, () => historyStore.history.clear());
+  bindPatchToProject(patchStore, projectStore);
   bindEngineToPatch(patchStore, engine);
   routeNotes(bus, () => engine);
   const { store: notesStore } = createNotesStore(bus);
@@ -42,13 +44,14 @@ export function createMockServices(): AppServices & { engine: MockEngine; host: 
   });
   const transportStore = createTransportStore({ projectStore, bus });
   const helpStore = createHelpStore();
-  const historyStore = createHistoryStore(patchStore);
+  const historyStore = createHistoryStore(patchStore, { projectStore });
   const tabStore = createTabStore();
-  const tryThisStore = createTryThisStore({ patchStore, bus, now: () => host.currentTime });
+  const pianoRollEdit = createPianoRollEditStore({ projectStore, historyStore, transportStore, view: pianoRollView });
+  const tryThisStore = createTryThisStore({ patchStore, projectStore, bus, now: () => host.currentTime });
   const startAudio = async () => {
     appStore.getState().setAudio('starting');
     await host.start();
     appStore.getState().setAudio('on');
   };
-  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, startAudio };
+  return { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, pianoRollEdit, startAudio };
 }

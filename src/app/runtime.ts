@@ -21,6 +21,8 @@ import { SelectedEngine } from './selected-engine';
 import { TrackEngines } from './track-engines';
 import { createPresetStore } from '@/state/preset-store';
 import { createTryThisStore } from '@/state/try-this';
+import { createPianoRollEditStore } from '@/state/piano-roll-edit';
+import { pianoRollView } from '@/state/piano-roll-view';
 import { createIdbStorage } from '@/state/storage';
 import { createProjectFileStore } from '@/state/project-file-store';
 import { createProjectPersistence } from '@/state/persistence';
@@ -52,8 +54,8 @@ async function build(): Promise<AppServices> {
 
   // The context is created suspended; nothing is audible until startAudio() runs from a gesture.
   // The editor patch is the selected track's patch. Bound before the history store exists so loading
-  // the first track is not an undo step; selecting another track clears history (see below).
-  bindPatchToProject(patchStore, projectStore, () => historyStore.history.clear());
+  // the first track is not an undo step. Undo history is per document, not per track (history-store.ts).
+  bindPatchToProject(patchStore, projectStore);
   // One engine per track, all feeding the master through the mixer and sharing one reverb hub (docs/performance.md).
   const reverbHub = new ReverbHub(host.context, host.input);
   const mixer = new WebTrackMixer(host.input);
@@ -83,9 +85,10 @@ async function build(): Promise<AppServices> {
   });
 
   const helpStore = createHelpStore();
-  const historyStore = createHistoryStore(patchStore);
+  const historyStore = createHistoryStore(patchStore, { projectStore });
   const tabStore = createTabStore();
-  const tryThisStore = createTryThisStore({ patchStore, bus, now: () => host.currentTime });
+  const pianoRollEdit = createPianoRollEditStore({ projectStore, historyStore, transportStore, view: pianoRollView });
+  const tryThisStore = createTryThisStore({ patchStore, projectStore, bus, now: () => host.currentTime });
   const startAudio = async () => {
     if (appStore.getState().audio === 'on') return;
     appStore.getState().setAudio('starting');
@@ -93,7 +96,7 @@ async function build(): Promise<AppServices> {
     appStore.getState().setAudio('on');
   };
 
-  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, startAudio };
+  const services: AppServices = { engine, host, patchStore, appStore, presetStore, bus, notesStore, helpStore, historyStore, tabStore, projectStore, transportStore, projectFileStore, persistence, tryThisStore, pianoRollEdit, startAudio };
   // Test hook (like the old synth-html `window.__daw`): e2e tests assert on state, not pixels.
   (window as unknown as { __synth: unknown }).__synth = { ...services, trackEngines, mixer, sequencer, vizStats: takeFrameStats };
   return services;

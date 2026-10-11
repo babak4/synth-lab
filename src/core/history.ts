@@ -10,6 +10,8 @@ export interface Command<S> {
   label: string;
   /** Commands with the same key, recorded within the coalescing window, merge into one entry. */
   coalesceKey?: string;
+  /** Opaque tag for what the command touches (the app uses a track id); passed to `onApply` on undo/redo. */
+  target?: string;
   undo(state: S): S;
   redo(state: S): S;
 }
@@ -19,12 +21,14 @@ export interface HistoryHost<S> {
   set(state: S): void;
 }
 
-export interface HistoryOptions {
+export interface HistoryOptions<S = unknown> {
   /** Most entries kept; the oldest are dropped. */
   limit?: number;
   /** Same-key commands closer together than this merge. */
   coalesceMs?: number;
   now?: () => number;
+  /** Called after an undo or redo has been applied, with the command it ran. */
+  onApply?: (cmd: Command<S>, direction: 'undo' | 'redo') => void;
 }
 
 export interface HistorySnapshot {
@@ -56,14 +60,16 @@ export class History<S> {
   private readonly limit: number;
   private readonly coalesceMs: number;
   private readonly now: () => number;
+  private readonly onApply?: HistoryOptions<S>['onApply'];
 
   constructor(
     private readonly host: HistoryHost<S>,
-    opts: HistoryOptions = {},
+    opts: HistoryOptions<S> = {},
   ) {
     this.limit = opts.limit ?? DEFAULT_LIMIT;
     this.coalesceMs = opts.coalesceMs ?? DEFAULT_COALESCE_MS;
     this.now = opts.now ?? (() => Date.now());
+    this.onApply = opts.onApply;
   }
 
   // ── recording ───────────────────────────────────────────────────────────────────────────
@@ -116,6 +122,7 @@ export class History<S> {
         this.grouped = [];
         this.record({
           label: this.groupLabel,
+          target: cmds.find((c) => c.target !== undefined)?.target,
           undo: (s) => [...cmds].reverse().reduce((acc, c) => c.undo(acc), s),
           redo: (s) => cmds.reduce((acc, c) => c.redo(acc), s),
         });
@@ -136,6 +143,7 @@ export class History<S> {
     this.host.set(e.cmd.undo(this.host.get()));
     this.redoStack.push(e);
     this.sealed = true;
+    this.onApply?.(e.cmd, 'undo');
     this.emit();
     return true;
   }
@@ -146,8 +154,22 @@ export class History<S> {
     this.host.set(e.cmd.redo(this.host.get()));
     this.undoStack.push(e);
     this.sealed = true;
+    this.onApply?.(e.cmd, 'redo');
     this.emit();
     return true;
+  }
+
+  /**
+   * Drop every entry (undo and redo) whose command matches `pred`, keeping the order of the rest.
+   * Used when what a step belongs to no longer exists (a removed track).
+   */
+  removeWhere(pred: (cmd: Command<S>) => boolean): void {
+    const before = this.undoStack.length + this.redoStack.length;
+    this.undoStack = this.undoStack.filter((e) => !pred(e.cmd));
+    this.redoStack = this.redoStack.filter((e) => !pred(e.cmd));
+    if (this.undoStack.length + this.redoStack.length === before) return;
+    this.sealed = true;
+    this.emit();
   }
 
   clear(): void {
@@ -185,6 +207,7 @@ function merge<S>(a: Command<S>, b: Command<S>): Command<S> {
   return {
     label: b.label,
     coalesceKey: a.coalesceKey,
+    target: b.target ?? a.target,
     undo: (s) => a.undo(b.undo(s)),
     redo: (s) => b.redo(a.redo(s)),
   };

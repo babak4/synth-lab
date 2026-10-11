@@ -9,6 +9,7 @@ import {
   clampViewport,
   defaultViewport,
   fitToNotes,
+  revealCell,
   sameViewport,
   scrollBy,
   zoomAxis,
@@ -32,6 +33,8 @@ export interface PianoRollViewState {
   /** Scale one axis; `anchor` is in grid-area pixels (default: the centre). */
   zoom(axis: 'x' | 'y', factor: number, anchor?: { x: number; y: number }): void;
   fit(notes: readonly Note[]): void;
+  /** Scroll the least amount that shows this cell (the keyboard cursor). */
+  reveal(tick: number, pitch: number): void;
   /** Apply a decoded wheel or key action. */
   apply(action: ViewAction, notes: readonly Note[], anchor?: { x: number; y: number }): void;
   reset(): void;
@@ -81,6 +84,10 @@ export function createPianoRollViewStore(): PianoRollViewStore {
       fit: (notes) => {
         const s = get();
         update(fitToNotes(notes, s.size, s.contentTicks));
+      },
+      reveal: (tick, pitch) => {
+        const s = get();
+        update(revealCell(s.viewport, tick, pitch, s.size, s.contentTicks));
       },
       apply: (action, notes, anchor) => {
         const s = get();

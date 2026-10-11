@@ -182,3 +182,21 @@ export function fitToNotes(notes: readonly Pick<Note, 'pitch' | 'start' | 'durat
   const centred = { ...fitted, scrollTick: from - Math.max(0, spareTicks) / 2 };
   return centreOnPitch(clampViewport(centred, size, contentTicks), (lo + hi) / 2, size, contentTicks);
 }
+
+/**
+ * Scroll the least amount that brings (tick, pitch) into view, leaving `marginPx` of room around it.
+ * Used by the keyboard cursor so it never walks off screen. Returns the same object when already visible.
+ */
+export function revealCell(vp: Viewport, tick: number, pitch: number, size: Size, contentTicks: number, marginPx = 24): Viewport {
+  let { scrollTick, scrollY } = vp;
+  const x = tickToX(vp, tick);
+  const mx = Math.min(marginPx, size.width / 4);
+  if (x < mx) scrollTick = tick - mx / vp.pxPerTick;
+  else if (x > size.width - mx) scrollTick = tick - (size.width - mx) / vp.pxPerTick;
+  const top = pitchToY(vp, pitch);
+  const my = Math.min(marginPx, size.height / 4);
+  if (top < my) scrollY += top - my;
+  else if (top + vp.rowHeight > size.height - my) scrollY += top + vp.rowHeight - (size.height - my);
+  if (scrollTick === vp.scrollTick && scrollY === vp.scrollY) return vp;
+  return clampViewport({ ...vp, scrollTick, scrollY }, size, contentTicks);
+}

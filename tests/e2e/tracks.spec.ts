@@ -40,8 +40,13 @@ test('each track keeps its own sound; selecting a track swaps the panel without 
 
   await page.evaluate((id) => (window as unknown as { __synth: Synth }).__synth.projectStore.getState().selectTrack(id), first);
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', '20');
-  // Switching tracks clears undo history: it must not replay one track's edit onto another.
-  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+  // Switching tracks keeps undo history, but every step belongs to the track it was made on (T5.3b):
+  // undoing track 2's edit while track 1 is shown restores track 2's sound, shows track 2, and leaves track 1 alone.
+  await page.getByRole('button', { name: 'Undo: Change Cutoff' }).click();
+  expect(await run(page, (s) => s.projectStore.getState().selectedTrackId)).toBe(second);
+  await expect(cutoff(page)).toHaveAttribute('aria-valuenow', '8000');
+  const after = await page.evaluate((a) => (window as unknown as { __synth: Synth }).__synth.trackEngines.get(a)!.getPatch().params['filter-cutoff'], first);
+  expect(after).toBe(20);
 });
 
 test('the keyboard plays the selected track only', async ({ page }) => {

@@ -19,6 +19,7 @@ import type { ProjectFileStore } from '@/state/project-file-store';
 import type { ProjectPersistence } from '@/state/persistence';
 import type { PresetStore } from '@/state/preset-store';
 import type { TryThisStore } from '@/state/try-this';
+import type { PianoRollEditStore } from '@/state/piano-roll-edit';
 
 export interface AppServices {
   engine: SynthEngine;
@@ -38,6 +39,8 @@ export interface AppServices {
   /** Autosave to browser storage and restore on startup. */
   persistence: ProjectPersistence;
   tryThisStore: TryThisStore;
+  /** Piano roll tool, snap, selection, clipboard and edit actions (plan T5.3b). */
+  pianoRollEdit: PianoRollEditStore;
   /** The note/transport event bus. Everything that plays or records notes talks through this. */
   bus: EventBus<EventMap>;
   /** What is sounding right now, for highlights and the note readout. */
