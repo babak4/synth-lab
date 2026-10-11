@@ -83,6 +83,9 @@ export class KeyboardPlayer {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // browser / OS shortcuts
 
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      // Shift means something else on the piano roll (extend the selection, octave transpose), and a held
+      // sustain would keep its audition notes ringing until Shift is released.
+      if (e.target instanceof Element && e.target.closest('[data-no-shift-sustain]')) return;
       this.shifts.add(e.code);
       this.setSustain(true);
       return;

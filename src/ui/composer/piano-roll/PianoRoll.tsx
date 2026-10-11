@@ -281,6 +281,7 @@ export function PianoRoll({ playheadTick }: PianoRollProps) {
         aria-label={`Piano roll grid for ${track.name}, ${noteCount} ${noteCount === 1 ? 'note' : 'notes'}`}
         aria-describedby={helpId}
         data-arrow-owner
+        data-no-shift-sustain
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
