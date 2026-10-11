@@ -22,6 +22,7 @@ type Synth = {
   transportStore: { getState(): { seek(t: number): void } };
   pianoRollEdit: { getState(): { selection: string[]; cursor: { tick: number; pitch: number } | null; clipboard: unknown; status: string; audition: { pitch: number; seq: number } | null; preview: unknown } };
   bus: { on(t: string, fn: (e: unknown) => void): () => void };
+  trackEngines: { get(id: string): { getVoiceStates(): { held: boolean }[] } | undefined };
   pianoRoll: { view: { getState(): { viewport: { scrollTick: number; scrollY: number; pxPerTick: number; rowHeight: number } } }; frame(): { draws: number; selectedNotes: number } };
 };
 
@@ -523,4 +524,79 @@ test('editing keys in the roll never reach the laptop keyboard player (no stray 
   await key(page, 'Control+d');
   const events = await page.evaluate(() => (window as unknown as { __kb: { source: string }[] }).__kb);
   expect(events.filter((e) => e.source === 'keyboard')).toEqual([]);
+});
+
+test('Shift+Up/Down in the roll never engages the sustain pedal, so audition notes end by themselves', async ({ page }) => {
+  await open(page);
+  await click(page, 1000, 60);
+  await run(page, (s) => {
+    const w = window as unknown as { __sustain: unknown[] };
+    w.__sustain = [];
+    s.bus.on('sustain', (e) => w.__sustain.push(e));
+    return 0;
+  });
+  for (let i = 0; i < 4; i++) await key(page, 'Shift+ArrowUp'); // an octave each; repeated presses must not pile up voices
+  await key(page, 'Shift+ArrowDown');
+  expect((await notes(page)).find((n) => n.id === 'a')!.pitch).toBe(60 + 36);
+  await page.waitForTimeout(1000);
+  expect(await page.evaluate(() => (window as unknown as { __sustain: unknown[] }).__sustain)).toEqual([]);
+  await expect
+    .poll(() => run(page, (s) => s.projectStore.getState().project.tracks.map((t) => s.trackEngines.get(t.id)?.getVoiceStates().filter((v) => v.held).length ?? 0)))
+    .toEqual([0]);
+});
+
+/** Dispatch a synthetic pointer event on the grid (for cases a real mouse cannot produce). */
+const pointerEvent = (page: Page, type: string, init: Record<string, unknown>) =>
+  page.evaluate(
+    ([t, i]) => {
+      const el = document.querySelector('[aria-label^="Piano roll grid"]')!;
+      el.dispatchEvent(new PointerEvent(t as string, { bubbles: true, cancelable: true, ...(i as object) }));
+    },
+    [type, init] as const,
+  );
+const preview = (page: Page) => run(page, (s) => s.pianoRollEdit.getState().preview as { notes: Note[] | null } | null);
+
+test('a lost pointer-up is recovered: a move with no button down ends the gesture without committing', async ({ page }) => {
+  await open(page, []);
+  const a = await at(page, 480, 64);
+  const b = await at(page, 1500, 64);
+  await page.evaluate(() => {
+    document.querySelector('[aria-label^="Piano roll grid"]')!.addEventListener('pointerdown', (e) => ((window as unknown as { __pid: number }).__pid = (e as PointerEvent).pointerId), { once: true });
+  });
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 4 });
+  expect(await preview(page)).not.toBeNull();
+  const pointerId = await page.evaluate(() => (window as unknown as { __pid: number }).__pid);
+  await pointerEvent(page, 'pointermove', { pointerId, pointerType: 'mouse', buttons: 0, clientX: b.x + 5, clientY: b.y });
+  expect(await preview(page)).toBeNull();
+  await page.mouse.up();
+  expect(await notes(page)).toHaveLength(0);
+});
+
+test('a pen eraser (button 5) does not start an edit', async ({ page }) => {
+  await open(page, []);
+  const p = await at(page, 960, 62);
+  const init = { pointerId: 77, pointerType: 'pen', clientX: p.x, clientY: p.y };
+  await pointerEvent(page, 'pointerdown', { ...init, button: 5, buttons: 32 });
+  await pointerEvent(page, 'pointerup', { ...init, button: 5, buttons: 0 });
+  expect(await notes(page)).toHaveLength(0);
+  // The pen tip (button 0) still draws.
+  await pointerEvent(page, 'pointerdown', { ...init, button: 0, buttons: 1 });
+  await pointerEvent(page, 'pointerup', { ...init, button: 0, buttons: 0 });
+  expect(await notes(page)).toHaveLength(1);
+});
+
+test('scrolling the roll with the wheel during a drag refreshes the preview from the last pointer position', async ({ page }) => {
+  await open(page, []);
+  const a = await at(page, 480, 64);
+  const b = await at(page, 900, 64);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 4 });
+  const before = (await preview(page))!.notes![0]!.duration;
+  await page.mouse.wheel(300, 0); // the view moves later in time under the stationary pointer
+  await expect.poll(async () => (await preview(page))!.notes![0]!.duration).toBeGreaterThan(before);
+  await page.mouse.up();
+  expect((await notes(page))[0]!.duration).toBeGreaterThan(before);
 });
