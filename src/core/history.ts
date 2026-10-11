@@ -159,6 +159,19 @@ export class History<S> {
     return true;
   }
 
+  /**
+   * Drop every entry (undo and redo) whose command matches `pred`, keeping the order of the rest.
+   * Used when what a step belongs to no longer exists (a removed track).
+   */
+  removeWhere(pred: (cmd: Command<S>) => boolean): void {
+    const before = this.undoStack.length + this.redoStack.length;
+    this.undoStack = this.undoStack.filter((e) => !pred(e.cmd));
+    this.redoStack = this.redoStack.filter((e) => !pred(e.cmd));
+    if (this.undoStack.length + this.redoStack.length === before) return;
+    this.sealed = true;
+    this.emit();
+  }
+
   clear(): void {
     this.undoStack = [];
     this.redoStack = [];

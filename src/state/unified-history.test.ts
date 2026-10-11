@@ -79,13 +79,28 @@ describe('one undo stack for sound and notes', () => {
     expect(s.historyStore.getState().canUndo).toBe(false);
   });
 
-  it('removing a track clears history (its steps would no longer apply)', () => {
-    const { s } = setup();
-    s.projectStore.getState().addTrack();
-    s.patchStore.getState().setParam('filter-cutoff', 1000);
-    expect(s.historyStore.getState().canUndo).toBe(true);
-    s.projectStore.getState().removeTrack(s.projectStore.getState().selectedTrackId);
-    expect(s.historyStore.getState().canUndo).toBe(false);
+  it('removing a track drops only its own steps; other tracks\' steps (undo and redo) keep working', () => {
+    const { s, track } = setup();
+    const first = s.projectStore.getState().selectedTrackId;
+    s.pianoRollEdit.getState().press(null, { tick: 0, pitch: 60, row: 60.5, alt: false, shift: false });
+    s.pianoRollEdit.getState().release(); // step 1: note on track 1
+    s.historyStore.getState().endGesture();
+    s.projectStore.getState().addTrack(); // selects track 2
+    s.patchStore.getState().setParam('filter-cutoff', 1000); // step 2: track 2's sound
+    s.historyStore.getState().endGesture();
+    s.pianoRollEdit.getState().press(null, { tick: 960, pitch: 62, row: 62.5, alt: false, shift: false });
+    s.pianoRollEdit.getState().release(); // step 3: note on track 2
+    s.historyStore.getState().undo(); // step 3 now sits on the redo stack
+    expect(s.historyStore.history.snapshot()).toMatchObject({ undoDepth: 2, redoDepth: 1 });
+
+    s.projectStore.getState().removeTrack(s.projectStore.getState().selectedTrackId); // track 2 goes
+    expect(s.projectStore.getState().selectedTrackId).toBe(first);
+    expect(s.historyStore.history.snapshot()).toMatchObject({ undoDepth: 1, redoDepth: 0 });
+    expect(s.historyStore.getState().undoLabel).toBe('Add note');
+    s.historyStore.getState().undo();
+    expect(track().notes).toHaveLength(0);
+    s.historyStore.getState().redo();
+    expect(track().notes).toHaveLength(1);
   });
 
   it('adding, renaming and reordering tracks leave history alone', () => {

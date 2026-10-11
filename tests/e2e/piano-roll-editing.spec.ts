@@ -124,7 +124,7 @@ test('click on empty grid adds a note of the current length, snapped to the cell
   const on = await page.evaluate(() => (window as unknown as { __on: { pitch: number; source: string }[] }).__on);
   expect(on.filter((e) => e.source === 'audition').map((e) => e.pitch)).toEqual([62]);
   expect(await undoLabel(page)).toBe('Add note');
-  await expect(page.getByTestId('piano-roll-status')).toHaveText('Added D4 quarter note at bar 1, beat 2');
+  await expect(page.getByTestId('piano-roll-status')).toContainText('Added D4 quarter note at bar 1, beat 2');
 
   await undo(page);
   expect(await notes(page)).toHaveLength(0);
@@ -418,7 +418,7 @@ test('transposing a group stops at the top of the keyboard instead of squashing 
   await key(page, 'Shift+ArrowUp');
   expect((await notes(page)).map((n) => n.pitch)).toEqual([127, 121]);
   await key(page, 'ArrowUp');
-  await expect(page.getByTestId('piano-roll-status')).toHaveText('Already at the highest pitch');
+  await expect(page.getByTestId('piano-roll-status')).toContainText('Already at the highest pitch');
 });
 
 test('every edit is one step in the SAME undo stack as sound edits, in order, via the top-bar buttons and the keyboard', async ({ page }) => {

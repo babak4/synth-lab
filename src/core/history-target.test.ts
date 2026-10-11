@@ -49,3 +49,36 @@ describe('command targets and onApply (what undo selects)', () => {
     expect(onApply).toHaveBeenLastCalledWith(expect.objectContaining({ target: 'trk_a' }), 'undo');
   });
 });
+
+describe('removeWhere', () => {
+  it('drops matching entries from both stacks, keeps order, and the rest still undo and redo', () => {
+    const { h, get } = make();
+    h.execute(add(1, { target: 'a' }));
+    h.endGesture();
+    h.execute(add(10, { target: 'b' }));
+    h.endGesture();
+    h.execute(add(100, { target: 'a' }));
+    h.endGesture();
+    h.execute(add(1000, { target: 'b' }));
+    h.undo(); // the 1000 step is now redoable
+    h.removeWhere((c) => c.target === 'b');
+    expect(h.snapshot()).toMatchObject({ undoDepth: 2, redoDepth: 0, undoLabel: 'add 100' });
+    // What is left is the a-steps: undoing them removes only their own effect from the state.
+    h.undo();
+    expect(get().n).toBe(10 + 1); // 1 + 10 applied, 100 undone: the b step's effect stays in the state (the caller owns that)
+    h.undo();
+    h.redo();
+    h.redo();
+    expect(get().n).toBe(111);
+  });
+
+  it('does nothing, and does not notify, when nothing matches', () => {
+    const { h } = make();
+    h.execute(add(1, { target: 'a' }));
+    let calls = 0;
+    h.subscribe(() => calls++);
+    h.removeWhere((c) => c.target === 'zzz');
+    expect(calls).toBe(0);
+    expect(h.snapshot().undoDepth).toBe(1);
+  });
+});

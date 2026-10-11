@@ -12,8 +12,7 @@
  * commands replace that track's patch, note commands add/remove notes by id on that track), so a step
  * recorded on track A is applied to track A even while track B is selected; undoing it selects A so the
  * change is visible (`onApply`). History ends when the whole project is replaced (open / new project:
- * `loadGeneration` changes) or when a track is removed (its steps, and the steps' neighbours' meaning,
- * are no longer reliable).
+ * `loadGeneration` changes). Removing a track drops only that track's steps (`History.removeWhere`).
  */
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { diffPatchParams, type Patch } from '@/core/contracts/patch';
@@ -107,10 +106,9 @@ export function createHistoryStore(patchStore: PatchStore, opts: HistoryStoreOpt
     }
     if (state.project === prev.project) return;
     const before = new Map(prev.project.tracks.map((t) => [t.id, t]));
-    if (prev.project.tracks.some((t) => !state.project.tracks.some((u) => u.id === t.id))) {
-      history.clear();
-      return;
-    }
+    // A removed track takes only its own steps with it; the other tracks' steps still apply.
+    const gone = new Set(prev.project.tracks.filter((t) => !state.project.tracks.some((u) => u.id === t.id)).map((t) => t.id));
+    if (gone.size > 0) history.removeWhere((cmd) => cmd.target !== undefined && gone.has(cmd.target));
     for (const track of state.project.tracks) {
       const old = before.get(track.id);
       if (!old || old.patch === track.patch) continue;

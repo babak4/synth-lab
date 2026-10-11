@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { EventBus, type EventMap } from '@/core/contracts/events';
 import { createPatchStore } from './patch-store';
 import { createTryThisStore } from './try-this';
+import { bindPatchToProject, createProjectStore } from './project-store';
 
 let patchStore: ReturnType<typeof createPatchStore>;
 let bus: EventBus<EventMap>;
@@ -105,5 +106,44 @@ describe('Undo', () => {
     store.getState().undo();
     expect(log.at(-1)).toBe('off 60');
     expect(timers).toEqual([]);
+  });
+});
+
+describe('with several tracks', () => {
+  function setup() {
+    const patches = createPatchStore();
+    const project = createProjectStore();
+    bindPatchToProject(patches, project);
+    const tt = createTryThisStore({ patchStore: patches, projectStore: project, bus: new EventBus<EventMap>(), now: () => 0 });
+    return { patches, project, tt };
+  }
+
+  it('selecting another track ends the experiment, so Undo can never load track A\'s patch into track B', () => {
+    const { patches, project, tt } = setup();
+    const a = project.getState().selectedTrackId;
+    tt.getState().setUp('filter', 0, exp);
+    expect(patches.getState().patch.params['filter-cutoff']).toBe(500);
+
+    project.getState().addTrack(); // selects track B, which shows its own sound
+    expect(patches.getState().patch.params['filter-cutoff']).toBe(8000);
+    expect(tt.getState().active).toBeNull();
+
+    patches.getState().setParam('filter-cutoff', 1234); // an edit on B
+    tt.getState().undo();
+    tt.getState().toggle();
+    expect(patches.getState().patch.params['filter-cutoff']).toBe(1234); // both are no-ops now
+
+    project.getState().selectTrack(a);
+    expect(patches.getState().patch.params['filter-cutoff']).toBe(500); // A still has the experiment applied
+    expect(project.getState().project.tracks[1]!.patch.params['filter-cutoff']).toBe(1234);
+  });
+
+  it('an experiment set up on the track you stay on keeps working', () => {
+    const { patches, tt } = setup();
+    tt.getState().setUp('filter', 0, exp);
+    tt.getState().toggle();
+    expect(patches.getState().patch.params['filter-cutoff']).toBe(8000);
+    tt.getState().undo();
+    expect(tt.getState().active).toBeNull();
   });
 });

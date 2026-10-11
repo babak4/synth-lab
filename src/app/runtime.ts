@@ -88,7 +88,7 @@ async function build(): Promise<AppServices> {
   const historyStore = createHistoryStore(patchStore, { projectStore });
   const tabStore = createTabStore();
   const pianoRollEdit = createPianoRollEditStore({ projectStore, historyStore, transportStore, view: pianoRollView });
-  const tryThisStore = createTryThisStore({ patchStore, bus, now: () => host.currentTime });
+  const tryThisStore = createTryThisStore({ patchStore, projectStore, bus, now: () => host.currentTime });
   const startAudio = async () => {
     if (appStore.getState().audio === 'on') return;
     appStore.getState().setAudio('starting');
